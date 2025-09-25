@@ -46,7 +46,6 @@ def preprocess_f1_data(f1_main_df):
     melbourne_df = f1_main_df[
         (f1_main_df["M_TRACKID"] == 0) & (f1_main_df["R_TRACKID"] == 0)
     ]
-    plot_track_rotated(melbourne_df, angle_deg=135)
 
     # Drop invalid laps 
     melbourne_df = melbourne_df[
