@@ -5,6 +5,7 @@ import numpy as np
 """
 Steps:
     - Filters valid laps, sessions, and turns
+    - Sorts by current time within a lap per session
     - Creates target variable (exit speed of Turn 2)
     - Recomputes velocity and G-force features
     - Handles missing values with interpolation
@@ -73,6 +74,15 @@ def preprocess_f1_data(f1_main_df):
     # Limit data to turns 1 and 2 only
     melbourne_df = melbourne_df[melbourne_df["TURN"].isin([1, 2])]
 
+    """
+    SORTING: Sorts all rows by the current time within a lap (per session) to ensure chronology
+    """
+    # Sort each lap per session by time 
+    melbourne_df = melbourne_df.sort_values(
+        by=["SESSION_GUID", "M_CURRENTLAPNUM", "M_CURRENTLAPTIMEINMS_1"],
+        ascending=True
+    )
+
     '''
     TARGET VARIABLE: Creates a target variable (exit_T2_speed) by capturing the last recorded speed 
     after Turn 2 for each session-lap combination, then merges it back into the main dataframe.
@@ -114,10 +124,10 @@ def preprocess_f1_data(f1_main_df):
         # Replace every first row NaN (each lap per session) with zero
         melbourne_df[f"VEL_{axis}"] = melbourne_df[f"VEL_{axis}"].fillna(0)
 
-    # Clip X,Y,Z velocities extreme outliers (~70m/s is realistic top velocity of an F1 car for THIS data)
-    melbourne_df["VEL_X"] = melbourne_df["VEL_X"].clip(-70, 70)
-    melbourne_df["VEL_Y"] = melbourne_df["VEL_Y"].clip(-70, 70)
-    melbourne_df["VEL_Z"] = melbourne_df["VEL_Z"].clip(-70, 70)
+    # Clip X,Y,Z velocities extreme outliers (~100m/s is realistic top velocity of an F1 car for THIS data)
+    melbourne_df["VEL_X"] = melbourne_df["VEL_X"].clip(-100, 100)
+    melbourne_df["VEL_Y"] = melbourne_df["VEL_Y"].clip(-100, 100)
+    melbourne_df["VEL_Z"] = melbourne_df["VEL_Z"].clip(-100, 100)
 
     # G-force
     for axis in ["X", "Y", "Z"]: 
