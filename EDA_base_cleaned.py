@@ -55,7 +55,7 @@ def preprocess_f1_data(f1_main_df):
 
     # Keep only valid racing status rows
     melbourne_df = melbourne_df[
-        (melbourne_df["M_DRIVERSTATUS_1"] == 1) & (melbourne_df["R_STATUS"] == 3)
+        (melbourne_df["M_DRIVERSTATUS_1"] == 1) 
     ]
 
     # Drop NaNs coordinates
@@ -66,11 +66,6 @@ def preprocess_f1_data(f1_main_df):
         (melbourne_df["M_LAPDISTANCE_1"] >= 0)
     ]
 
-    # Drop session 1 times greater than 60000ms
-    melbourne_df = melbourne_df[
-        (melbourne_df["M_SECTOR1TIMEINMS"] < 60000)
-    ]
-
     # Limit data to turns 1 and 2 only
     melbourne_df = melbourne_df[melbourne_df["TURN"].isin([1, 2])]
 
@@ -79,7 +74,7 @@ def preprocess_f1_data(f1_main_df):
     """
     # Sort each lap per session by time 
     melbourne_df = melbourne_df.sort_values(
-        by=["SESSION_GUID", "M_CURRENTLAPNUM", "M_CURRENTLAPTIMEINMS_1"],
+        by=["M_SESSIONUID", "M_CURRENTLAPNUM", "M_CURRENTLAPTIMEINMS_1"],
         ascending=True
     )
 
@@ -92,14 +87,14 @@ def preprocess_f1_data(f1_main_df):
 
     # For each session + lap combo, take the exit speed of T2 
     exit_t2 = (
-        t2_df.groupby(["SESSION_GUID", "M_CURRENTLAPNUM"])["M_SPEED_1"]
+        t2_df.groupby(["M_SESSIONUID", "M_CURRENTLAPNUM"])["M_SPEED_1"]
         .last()
         .reset_index(name="exit_T2_speed")
     )
 
     melbourne_df = melbourne_df.merge(
         exit_t2,
-        on=["SESSION_GUID", "M_CURRENTLAPNUM"],
+        on=["M_SESSIONUID", "M_CURRENTLAPNUM"],
         how="left"
     )
 
@@ -117,8 +112,8 @@ def preprocess_f1_data(f1_main_df):
     # Velocity 
     for axis in ["X", "Y", "Z"]: 
         melbourne_df[f"VEL_{axis}"] = (
-            melbourne_df.groupby(["SESSION_GUID", "M_CURRENTLAPNUM"])[f"M_WORLDPOSITION{axis}_1"].diff() /
-            melbourne_df.groupby(["SESSION_GUID", "M_CURRENTLAPNUM"])["M_CURRENTLAPTIMEINMS_1"].diff()
+            melbourne_df.groupby(["M_SESSIONUID", "M_CURRENTLAPNUM"])[f"M_WORLDPOSITION{axis}_1"].diff() /
+            melbourne_df.groupby(["M_SESSIONUID", "M_CURRENTLAPNUM"])["M_CURRENTLAPTIMEINMS_1"].diff()
         )
         melbourne_df[f"VEL_{axis}"] *= 1000
         # Replace every first row NaN (each lap per session) with zero
@@ -133,8 +128,8 @@ def preprocess_f1_data(f1_main_df):
     for axis in ["X", "Y", "Z"]: 
         # Acceleration
         melbourne_df[f"GFORCE_{axis}"] = (
-            melbourne_df.groupby(["SESSION_GUID", "M_CURRENTLAPNUM"])[f"VEL_{axis}"].diff() /
-            melbourne_df.groupby(["SESSION_GUID", "M_CURRENTLAPNUM"])["M_CURRENTLAPTIMEINMS_1"].diff() 
+            melbourne_df.groupby(["M_SESSIONUID", "M_CURRENTLAPNUM"])[f"VEL_{axis}"].diff() /
+            melbourne_df.groupby(["M_SESSIONUID", "M_CURRENTLAPNUM"])["M_CURRENTLAPTIMEINMS_1"].diff() 
         )
         melbourne_df[f"GFORCE_{axis}"] *= 1000
         # Convert to Gs 
@@ -147,7 +142,7 @@ def preprocess_f1_data(f1_main_df):
         # Interpolate linearly per session/lap
         melbourne_df[f"GFORCE_{axis}"] = (
             melbourne_df
-            .groupby(["SESSION_GUID", "M_CURRENTLAPNUM"])[f"GFORCE_{axis}"]
+            .groupby(["M_SESSIONUID", "M_CURRENTLAPNUM"])[f"GFORCE_{axis}"]
             .transform(lambda g: g.interpolate(method="linear"))
             .ffill()
             .bfill()
@@ -156,7 +151,7 @@ def preprocess_f1_data(f1_main_df):
     # Linear interpolation for the front wheels angle
     melbourne_df["M_FRONTWHEELSANGLE"] = (
         melbourne_df
-        .groupby(["SESSION_GUID", "M_CURRENTLAPNUM"])["M_FRONTWHEELSANGLE"]
+        .groupby(["M_SESSIONUID", "M_CURRENTLAPNUM"])["M_FRONTWHEELSANGLE"]
         .transform(lambda g: g.interpolate(method="linear")).ffill().bfill()
     )
 
@@ -166,7 +161,7 @@ def preprocess_f1_data(f1_main_df):
     redundant, empty, or not needed for modeling/analysis, leaving only clean and relevant features.
     """
     red_cols = [
-        "CREATED_ON", "GAMEHOST", "DEVICENAME", "M_SESSIONUID", "R_SESSION", "R_GAMEHOST",
+        "CREATED_ON", "GAMEHOST", "DEVICENAME", "SESSION_GUID", "R_SESSION", "R_GAMEHOST",
         "M_PACKETFORMAT", "M_GAMEMAJORVERSION", "M_GAMEMINORVERSION", "M_FRAMEIDENTIFIER", "R_STATUS",
         "M_CURRENTLAPNUM_1", "M_TRACKID", "R_TRACKID", "M_LAPINVALID", "M_SECTOR1TIMEMSPART_1", 
         "M_SECTOR1TIMEMINUTESPART_1", "M_SECTOR2TIMEMSPART_1", "M_SECTOR2TIMEMINUTESPART_1", "M_SECTOR_1",
