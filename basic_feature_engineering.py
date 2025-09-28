@@ -16,12 +16,19 @@ def optimize_target_variable(df):
 
 def basic_features(df):
     """
-    [GAHAN TODO: Insert brief description and purpose of this feature]
+    Creating a feature that combines the driver's throttle and brake input into 
+    one variable for convenient visualisation. 
+
+    Example usage.
+
+    df = basic_features(df)
     """
     df["M_BRAKE_THROTTLE_1"] = df["M_THROTTLE_1"] - df["M_BRAKE_1"]
 
+    return df
     # TEMPLATE
     """ 
     [FEATURE DESCRIPTION AND PURPOSE]
     """
     # [FEATURE CODE]
+
