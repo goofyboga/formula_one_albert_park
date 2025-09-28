@@ -49,17 +49,17 @@ These visualizations reflect deliberate design choices, balancing performance re
 <table>
   <tr>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/216c0449-cf1d-4b91-b64b-2ff858e9a943" width="400"/><br/>
+      <img src="https://github.com/user-attachments/assets/216c0449-cf1d-4b91-b64b-2ff858e9a943" width="450"/><br/>
       <sub><b>Exit Speed T2</b></sub>
     </td>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/a3ba7261-adf9-4d9b-befb-bdfb48d30ed9" width="400"/><br/>
+      <img src="https://github.com/user-attachments/assets/a3ba7261-adf9-4d9b-befb-bdfb48d30ed9" width="450"/><br/>
       <sub><b>Brake–Throttle Exit Speed</b></sub>
     </td>
   </tr>
 </table>
 
-Hypothesis: Apex-Hugging and Curvature Optimization
+Our Hypothesis: Apex-Hugging and Curvature Optimization
 
 We hypothesize that optimal cornering through the S-shaped Turns 1–2 is achieved by hugging track boundaries and minimizing transition time between apexes. By maximizing the local turning radius $R=\frac{1}{k}$ where $k$ is curvature, drivers reduce lateral acceleration peaks and maintain momentum. Properly aligning the car’s momentum with steering and wheel orientation further limits understeer or oversteer. Smoother transitions between apexes minimize speed loss, leading to higher exit speeds. Visualizing exit speed along this trajectory, overlaid with the brake-throttle control variable, allows us to assess how effectively drivers balance braking and throttle inputs and whether the fastest trajectories follow the ideal racing line.
 
