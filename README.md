@@ -44,17 +44,17 @@ Two features are showcased below to the marker to demonstrate our comprehensive 
 
 - Brake-throttle combination (`M_BRAKE_THROTTLE_1`) – an advanced feature showcasing driver control strategy. By plotting the highest exit speeds against this variable, it becomes clear that smoother, earlier braking followed by gradual throttle yields more efficient corner exits.
 
-These visualizations reflect deliberate design choices, balancing performance relevance, interpretability, and analytical insight. Feel free to click on the images below.
+These visualizations reflect deliberate design choices, balancing performance relevance, interpretability, and analytical insight. Feel free to click on the images below for proper detail and zoom!
 
 <table>
   <tr>
     <td align="center">
       <img src="https://github.com/user-attachments/assets/216c0449-cf1d-4b91-b64b-2ff858e9a943" width="480"/><br/>
-      <sub><b>Exit Speed T2</b></sub>
+      <sub><b>Optimized Exit Speed Line T2</b></sub>
     </td>
     <td align="center">
       <img src="https://github.com/user-attachments/assets/a3ba7261-adf9-4d9b-befb-bdfb48d30ed9" width="480"/><br/>
-      <sub><b>Brake–Throttle Exit Speed</b></sub>
+      <sub><b>Brake–Throttle Balance on Peak Exit Speeds</b></sub>
     </td>
   </tr>
 </table>
