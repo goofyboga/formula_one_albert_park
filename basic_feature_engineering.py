@@ -13,3 +13,15 @@ def optimize_target_variable(df):
     df = df[df["exit_T2_speed"] >= 175] # Clear outliers (invalid or non consequential speed)
     df["exit_T2_speed_log"] = np.log(df["exit_T2_speed"]) # Reduce target variable imbalance
     return df
+
+def basic_features(df):
+    """
+    [GAHAN TODO: Insert brief description and purpose of this feature]
+    """
+    df["M_BRAKE_THROTTLE_1"] = df["M_THROTTLE_1"] - df["M_BRAKE_1"]
+
+    # TEMPLATE
+    """ 
+    [FEATURE DESCRIPTION AND PURPOSE]
+    """
+    # [FEATURE CODE]
