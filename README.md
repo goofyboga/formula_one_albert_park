@@ -5,12 +5,14 @@
 This project processes raw F1 telemetry data into an analytical dataset focused on optimizing vehicle dynamics at Melbourne's Albert Park Circuit. Strong cornering performance creates overtaking opportunities on the long straights and significantly impacts overall lap times. Specifically, we analyze how Temperature and pressure, position, throttle, brake and related controls, rotation and direction, speed and gravity, other dynamic data impact cornering speed and lap times.
 
 #### Sources
-2023 F1 Australian Grand Prix Telemetry in Melbourne Albert Park：Vehicle positioning and motion data, Driver control inputs, Session metadata and timing information
+2023 F1 Australian Grand Prix Telemetry in Melbourne Albert Park
 
 ### Workflow
-Data cleaning: In order to ensure the product is stable and has no unusable rows, we removed some some parts of the data. Most importantly, Invalid laps, laps that were not on the Melbourne track, laps where driver status was invalid were all dropped. Some columns had missing values that were interpolated linearly or otherwise.
+Data cleaning: In order to ensure the product is stable and has no unusable rows, we removed some some parts of the data. Most importantly, Invalid laps, laps that were not on the Melbourne track, laps where driver status was invalid were all dropped. Some columns had missing values that were interpolated linearly or forward/backward filled. 
 
-The data was then sorted based on the variable `CURRENTLAPTIME` in order to make plotting simpler. Since the focus of the case study is the exit velocity coming out of Turn 1 and 2 into Turn 3, the data was limited to only include points that can be classified by the column `TURN` to be part of turn 1 or 2. 
+Crucially rows are grouped by 'M_SESSIONUID' then 'M_CURRENTLAPNUM' for indiscriminated lap to lap analysis, after relative independence and minimal correlation of the lap number was confirmed.
+
+The data was sorted based on the variable `CURRENTLAPTIME` in order to make plotting simpler. Since the focus of the case study is the exit velocity coming out of Turn 1 and 2 into Turn 3, the data was limited to only include points that can be classified by the column `TURN` to be part of turn 1 or 2. 
 
 Target engineering: Given the goal of this data project, we decided that the speed of the car when exiting the second turn was of paramount importance and is a good pick to be the target variable. The column, `exit_T2_speed` contains the target variable.
 
@@ -64,7 +66,7 @@ These visualizations reflect deliberate design choices, balancing performance re
 We hypothesize that optimal cornering through the S-shaped Turns 1–2 is achieved by hugging track boundaries and minimizing transition time between apexes. By maximizing the local turning radius $R=\frac{1}{k}$ where $k$ is curvature, drivers reduce lateral acceleration peaks and maintain momentum. Properly aligning the car’s momentum with steering and wheel orientation further limits understeer or oversteer. Smoother transitions between apexes minimize speed loss, leading to higher exit speeds. Visualizing exit speed along this trajectory, overlaid with the brake-throttle control variable, allows us to assess how effectively drivers balance braking and throttle inputs and whether the fastest trajectories follow the ideal racing line.
 
 ### Project Status
-Our team has completed data cleaning and feature engineering on the raw F1 dataset. Key steps include filtering and validation, where we remove all races on different tracks and those with missing or unrealistic distance data, and restrict the dataset to only turns 1 and 2. Sorting, where we ordered the dataset into telemetry points chronologically. Feature engineering where we created the target variable which we decided is the exit speed of turn 2, as well as derived velocity and g-forces from positional and timestamp data. Lastly, data quality handling where we dropped all redundant, irrelevant or duplicate columns and applied interpolation to address missing datasets.
+Our team has completed data cleaning and started feature engineering on the raw F1 dataset. Key steps include filtering and validation, where we remove all races on different tracks and those with missing or unrealistic distance data, and restrict the dataset to only turns 1 and 2. Sorting, where we ordered the dataset into telemetry points chronologically. Feature engineering where we created the target variable which we decided is the exit speed of turn 2, as well as derived velocity and g-forces from positional and timestamp data. Lastly, data quality handling where we dropped all redundant, irrelevant or duplicate columns and applied interpolation to address missing datasets.
 
 In the next step, univariate and multivariate analysis will be conducted for finding patterns, anomalies, and outliers, and adding new features where required. Each member will be given a specific domain. Rayaan on temperature/pressure, Tay on position, Yulun on dynamics, Gahan on throttle/braking, and Kevin on rotation, velocity, and g-forces. Results will then be combined to build a consolidated, modelling-ready dataset.
 
