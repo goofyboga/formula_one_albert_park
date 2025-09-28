@@ -46,10 +46,12 @@ Two features are showcased below to the marker to demonstrate our comprehensive 
 
 These visualizations reflect deliberate design choices, balancing performance relevance, interpretability, and analytical insight.
 
-<p float="left">
-  <img src="apex_exit_T2_speed[240-250].png" alt="Exit Speed T2" width="300"/>
-  <img src="M_BRAKE_THROTTLE_1_TOP1%_exit_speed.png" alt="Brake-Throttle Exit Speed" width="300"/>
-</p>
+<img width="960" height="853" alt="apex_exit_T2_speed 240-250" src="https://github.com/user-attachments/assets/216c0449-cf1d-4b91-b64b-2ff858e9a943" />
+<img width="976" height="855" alt="M_BRAKE_THROTTLE_1_TOP1%_exit_speed" src="https://github.com/user-attachments/assets/a3ba7261-adf9-4d9b-befb-bdfb48d30ed9" />
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/216c0449-cf1d-4b91-b64b-2ff858e9a943" width="400" />
+  <img src="https://github.com/user-attachments/assets/a3ba7261-adf9-4d9b-befb-bdfb48d30ed9" width="400" />
+</div>
 
 Hypothesis: Apex-Hugging and Curvature Optimization
 
