@@ -38,13 +38,18 @@ Advanced Features
 
 - Trajectory and directional metrics: Average forward and lateral vectors, heading change, and estimated turn radius quantify the path efficiency through the turn.
 
-Two features are highlighted to the marker to demonstrate our comprehensive approach:
+Two features are showcased below to the marker to demonstrate our comprehensive approach:
 
 - Exit speed at Turn 2 (`exit_T2_speed`) – Serves as the primary target variable. Outliers below 175 km/hr were removed to focus on meaningful performance data, and a log transformation was applied to reduce skew and heteroscedasticity. Visualizing the top-performing range (240–250 km/hr) reveals that the fastest lines consistently hug the track boundaries, confirming the S-shaped apex-hugging pattern.
 
 - Brake-throttle combination (`M_BRAKE_THROTTLE_1`) – an advanced feature showcasing driver control strategy. By plotting the highest exit speeds against this variable, it becomes clear that smoother, earlier braking followed by gradual throttle yields more efficient corner exits.
 
 These visualizations reflect deliberate design choices, balancing performance relevance, interpretability, and analytical insight.
+
+<p float="left">
+  <img src="apex_exit_T2_speed[240-250].png" alt="Exit Speed T2" width="300"/>
+  <img src="M_BRAKE_THROTTLE_1_TOP1%_exit_speed.png" alt="Brake-Throttle Exit Speed" width="300"/>
+</p>
 
 Hypothesis: Apex-Hugging and Curvature Optimization
 
