@@ -75,6 +75,6 @@ In later stages of using our data product, more flexible methods should be explo
 
 
 #### Support Information
-Main Contact: Kevin Zhou (email: kevin.zhou@student.unsw.edu.au, z5342593@ad.unsw.edu.au)
+Main Contact: Kevin Zhou (Email: kevin7goestoheaven@gmail.com, z5342593@ad.unsw.edu.au)
 #### Contributors
 This data product is developed by our team as part of the Data Science Capstone Project. Rayaan, Tay, Yulun, Gahan and Kevin. Contributions are welcome via pull requests on GitHub. Please open an issue first to discuss proposed changes or feature requests.
