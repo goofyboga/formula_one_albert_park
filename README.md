@@ -44,7 +44,7 @@ Two features are showcased below to the marker to demonstrate our comprehensive 
 
 - Brake-throttle combination (`M_BRAKE_THROTTLE_1`) – an advanced feature showcasing driver control strategy. By plotting the highest exit speeds against this variable, it becomes clear that smoother, earlier braking followed by gradual throttle yields more efficient corner exits.
 
-These visualizations reflect deliberate design choices, balancing performance relevance, interpretability, and analytical insight.
+These visualizations reflect deliberate design choices, balancing performance relevance, interpretability, and analytical insight. Feel free to click on the images below.
 
 <table>
   <tr>
@@ -59,7 +59,7 @@ These visualizations reflect deliberate design choices, balancing performance re
   </tr>
 </table>
 
-Our Hypothesis: Apex-Hugging and Curvature Optimization
+**Our Hypothesis: Apex-Hugging and Curvature Optimization**
 
 We hypothesize that optimal cornering through the S-shaped Turns 1–2 is achieved by hugging track boundaries and minimizing transition time between apexes. By maximizing the local turning radius $R=\frac{1}{k}$ where $k$ is curvature, drivers reduce lateral acceleration peaks and maintain momentum. Properly aligning the car’s momentum with steering and wheel orientation further limits understeer or oversteer. Smoother transitions between apexes minimize speed loss, leading to higher exit speeds. Visualizing exit speed along this trajectory, overlaid with the brake-throttle control variable, allows us to assess how effectively drivers balance braking and throttle inputs and whether the fastest trajectories follow the ideal racing line.
 
