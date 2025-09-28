@@ -49,16 +49,16 @@ These visualizations reflect deliberate design choices, balancing performance re
 <table>
   <tr>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/216c0449-cf1d-4b91-b64b-2ff858e9a943" width="480"/><br/>
+      <img src="..." width="500"/><br/>
       <sub><b>Exit Speed T2</b></sub>
     </td>
-    <td width="50"></td> <!-- spacer column -->
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/a3ba7261-adf9-4b91-b64b-2ff858e9a943" width="480"/><br/>
+      <img src="..." width="500"/><br/>
       <sub><b>Brake–Throttle Exit Speed</b></sub>
     </td>
   </tr>
 </table>
+
 
 Hypothesis: Apex-Hugging and Curvature Optimization
 
