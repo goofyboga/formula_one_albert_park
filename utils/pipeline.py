@@ -189,7 +189,7 @@ def data_pipeline(path=None, left_path=None, right_path=None):
 
     # Enforce track limits, to ensure laps wildly off track are removed.
     df = enforce_track_limits(df, left, right)
-    logger.info("Enforced track limits")
+    logger.info("Enforced track limits.")
 
     # Remove laps with too few data points.
     df, discarded = remove_short_laps(df)
