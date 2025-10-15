@@ -269,6 +269,7 @@ def initialise_lap_summary(df):
     summary = pd.DataFrame(summary_rows)
     return summary
 
+
 def find_nearest_point(df_ref, x, y):
     """
     Finds the index of the point in df_ref closest to the given (x, y) coordinate.
@@ -287,7 +288,7 @@ def define_cut_line(df_right, df_left, x, y):
     Defines a perpendicular line ("cut line") across the track between the right and left boundaries.
     The line starts at the nearest point on the right boundary to (x, y) and extends perpendicularly
     toward the left boundary, finding the nearest point on the left boundary to complete the line.
-    
+
     start_line = define_cut_line(right, left, x=152.5310179012927, y=413.5544859306186)
     end_line   = define_cut_line(right, left,  x=564.8183173166642, y=-138.23284559314058)
     """
@@ -423,6 +424,42 @@ def min_apex_distance(df, summary):
     )
     summary = pd.merge(summary, distances, on="lap_index", how="inner")
 
+    return summary
+
+
+def add_avg_brake_pressure(df, summary):
+    avg = (
+        df.groupby("lap_index")["M_BRAKE"].mean().reset_index(name="avg_brake_pressure")
+    )
+    summary = summary.merge(avg, on="lap_index", how="left")
+    return summary
+
+
+def add_avg_throttle_pressure(df, summary):
+    avg = (
+        df.groupby("lap_index")["M_THROTTLE"]
+        .mean()
+        .reset_index(name="avg_throttle_pressure")
+    )
+    summary = summary.merge(avg, on="lap_index", how="left")
+    return summary
+
+
+def add_peak_brake_pressure(df, summary):
+    peak = (
+        df.groupby("lap_index")["M_BRAKE"].max().reset_index(name="peak_brake_pressure")
+    )
+    summary = summary.merge(peak, on="lap_index", how="left")
+    return summary
+
+
+def add_peak_throttle_pressure(df, summary):
+    peak = (
+        df.groupby("lap_index")["M_THROTTLE"]
+        .max()
+        .reset_index(name="peak_throttle_pressure")
+    )
+    summary = summary.merge(peak, on="lap_index", how="left")
     return summary
 
 
