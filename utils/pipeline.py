@@ -1,6 +1,6 @@
 import pandas as pd
 import logging
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Polygon, Point, LineString
 import numpy as np
 from scipy.spatial import cKDTree
 
