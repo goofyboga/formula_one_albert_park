@@ -348,5 +348,5 @@ def data_pipeline(path=None, left_path=None, right_path=None):
 
     # Creates a summary df with index and sector_time as columns
     summary_df = initialise_lap_summary(df)
-    logger.info("Created sumamry dataframe.")
+    logger.info("Created summary dataframe.")
     return df, left, right, summary_df
