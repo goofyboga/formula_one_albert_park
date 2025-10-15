@@ -536,4 +536,14 @@ def data_pipeline(path=None, left_path=None, right_path=None):
     summary = min_apex_distance(df, summary)
     logger.info("Calculated minimum distance to apex 1 and 2.")
 
+    # Calculating average brake and throttle pressure
+    summary = add_avg_brake_pressure(df, summary)
+    summary = add_avg_throttle_pressure(df, summary)
+    logger.info("Calculated average brake and throttle pressure per lap.")
+
+    # Calculating max brake and throttle pressure
+    summary = add_peak_brake_pressure(df, summary)
+    summary = add_peak_throttle_pressure(df, summary)
+    logger.info("Calculated peak brake and throttle pressure per lap.")
+
     return df, left, right, line, summary
