@@ -265,6 +265,71 @@ def initialise_lap_summary(df):
     summary = pd.DataFrame(summary_rows)
     return summary
 
+def find_nearest_point(df_ref, x, y):
+    """
+    Finds the index of the point in df_ref closest to the given (x, y) coordinate.
+    """
+    # Compute the Euclidean distance between each point and the reference point (x, y)
+    diffs = np.sqrt((df_ref["WORLDPOSX"] - x) ** 2 + (df_ref["WORLDPOSY"] - y) ** 2)
+
+    # Get the index of the point with the minimum distance
+    idx_nearest = diffs.idxmin()
+
+    return idx_nearest
+
+
+def define_cut_line(df_right, df_left, x, y):
+    """
+    Defines a perpendicular line ("cut line") across the track between the right and left boundaries.
+    The line starts at the nearest point on the right boundary to (x, y) and extends perpendicularly
+    toward the left boundary, finding the nearest point on the left boundary to complete the line.
+    
+    start_line = define_cut_line(right, left, x=152.5310179012927, y=413.5544859306186)
+    end_line   = define_cut_line(right, left,  x=564.8183173166642, y=-138.23284559314058)
+    """
+    # Sort both left and right boundaries by frame to ensure sequential order
+    df_right = df_right.sort_values(by="FRAME", ascending=True).reset_index(drop=True)
+    df_left = df_left.sort_values(by="FRAME", ascending=True).reset_index(drop=True)
+
+    # Find the index of the nearest point on the right boundary to the given (x, y)
+    right_idx = find_nearest_point(df_right, x, y)
+
+    # Retrieve the current and next points on the right boundary to estimate local direction
+    current_row = df_right.iloc[right_idx]
+    next_row = df_right.iloc[right_idx + 1]
+
+    # Compute direction vector along the right boundary
+    direction_vector_x = next_row["WORLDPOSX"] - current_row["WORLDPOSX"]
+    direction_vector_y = next_row["WORLDPOSY"] - current_row["WORLDPOSY"]
+
+    # Compute perpendicular vector (normal to the right boundary)
+    perpendicular_vector_x = -direction_vector_y
+    perpendicular_vector_y = direction_vector_x
+
+    # Normalize the perpendicular vector to unit length
+    norm = np.sqrt(perpendicular_vector_x**2 + perpendicular_vector_y**2)
+    perpendicular_vector_x = perpendicular_vector_x / norm
+    perpendicular_vector_y = perpendicular_vector_y / norm
+
+    # Extend the perpendicular vector from the right boundary toward the left boundary
+    right_len = 20  # Approximate track width (in meters)
+    x2 = x + perpendicular_vector_x * right_len
+    y2 = y + perpendicular_vector_y * right_len
+
+    # Find the nearest point on the left boundary corresponding to the projected left-side location
+    left_idx = find_nearest_point(df_left, x2, y2)
+    left_x = float(df_left.iloc[left_idx]["WORLDPOSX"])
+    left_y = float(df_left.iloc[left_idx]["WORLDPOSY"])
+
+    cut_line = LineString([(float(x), float(y)), (left_x, left_y)])
+
+    print("Cut line:")
+    print(cut_line)
+    print(f"Right border coordinate: ({float(x):.3f}, {float(y):.3f})")
+    print(f"Left border coordinate:  ({left_x:.3f}, {left_y:.3f})")
+
+    return cut_line, (float(x), float(y)), (left_x, float(left_y))
+
 
 def remove_redundant_cols(df):
     """
