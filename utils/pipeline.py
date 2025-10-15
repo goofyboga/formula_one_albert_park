@@ -2,6 +2,7 @@ import pandas as pd
 import logging
 from shapely.geometry import Polygon, Point
 import numpy as np
+from scipy.spatial import cKDTree
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -136,6 +137,25 @@ def read_process_right(path=None):
     return right
 
 
+def read_process_line(path=None):
+    """Load and restrict the right track limits to expected coordinate bounds."""
+    if path:
+        line = pd.read_csv(f"{path}")
+    else:
+        line = pd.read_csv("data/f1sim-ref-line.csv")
+
+    # Restrict to the same bounds as track_slice
+    line = line[
+        (line["WORLDPOSX"] >= 120)
+        & (line["WORLDPOSX"] <= 600)
+        & (line["WORLDPOSY"] >= -200)
+        & (line["WORLDPOSY"] <= 600)
+    ]
+
+    line = line.sort_values("FRAME")
+    return line
+
+
 def interpolate_steering(df):
     df["M_FRONTWHEELSANGLE"] = (
         df.groupby(["lap_index"])["M_FRONTWHEELSANGLE"]
@@ -240,10 +260,10 @@ def initialise_lap_summary(df):
         start_time = time_to_seconds(lap.iloc[0]["CURRENTLAPTIME"])
         end_time = time_to_seconds(lap.iloc[-1]["CURRENTLAPTIME"])
         sector_time = end_time - start_time
-        summary_rows.append({"index": lap_idx, "sector_time": sector_time})
+        summary_rows.append({"lap_index": lap_idx, "sector_time": sector_time})
 
-    summary_df = pd.DataFrame(summary_rows)
-    return summary_df
+    summary = pd.DataFrame(summary_rows)
+    return summary
 
 
 def remove_redundant_cols(df):
@@ -294,6 +314,52 @@ def remove_redundant_cols(df):
     return df
 
 
+def racing_line_deviation(df, line):
+    line_points = line[["WORLDPOSX", "WORLDPOSY"]].to_numpy()
+    tree = cKDTree(line_points)
+
+    driver_points = df[["M_WORLDPOSITIONX_1", "M_WORLDPOSITIONY_1"]].to_numpy()
+    distances, _ = tree.query(driver_points)
+
+    df["line_distance"] = distances
+    return df
+
+
+def avg_line_distance(df, summary):
+    """
+    Calculate the average distance from the racing line per lap
+    and add it to the summary dataframe.
+    """
+    avg_dist = df.groupby("lap_index")["line_distance"].mean().reset_index()
+    avg_dist.rename(columns={"line_distance": "avg_line_distance"}, inplace=True)
+
+    summary = summary.merge(avg_dist, on="lap_index", how="left")
+    return summary
+
+
+def min_apex_distance(df, summary):
+    size = 0
+    p1 = (375.57, 191.519)
+    col1 = "min_dist_apex1"
+
+    p2 = (368.93, 90.0)
+    col2 = "min_dist_apex2"
+
+    distances = pd.DataFrame(["lap_index", col1, col2])
+    for i in df["lap_index"].unique():
+        lap = df[df["lap_index"] == i]
+        lap_points = lap[["M_WORLDPOSITIONX_1", "M_WORLDPOSITIONY_1"]].to_numpy()
+        tree = cKDTree(lap_points)
+        distance1, _ = tree.query(p1[0], p1[1])
+        distance2, _ = tree.query(p2[0], p2[1])
+
+        distances.loc[size] = (i, distance1, distance2)
+
+    summary = pd.merge(summary, distances, on="lap_index", how="inner")
+
+    return summary
+
+
 def data_pipeline(path=None, left_path=None, right_path=None):
     """
     Complete data pipeline:
@@ -305,7 +371,7 @@ def data_pipeline(path=None, left_path=None, right_path=None):
         - remove laps with insufficient data
     """
     df = read_data(path)
-    logger.info("Data loaded successfully.")
+    logger.info("Data loaded.")
 
     # Removes laps from trakcs that are not melbourne
     df = filter_melbourne(df)
@@ -313,7 +379,7 @@ def data_pipeline(path=None, left_path=None, right_path=None):
 
     # Removes rows with NA (X,Y) coordinates
     df = remove_na(df)
-    logger.info("Removed data points with missing (x,y)")
+    logger.info("Removed data points with missing x or y co-ordinates.")
 
     # Re-index the laps for easier access
     df = re_index(df)
@@ -339,14 +405,32 @@ def data_pipeline(path=None, left_path=None, right_path=None):
     df = remove_short_laps(df)
     logger.info("Removed laps with insufficient data.")
 
-    # Compute turning window metrics
+    # Compute turning window metrics.
     df = compute_turning_window(df)
-    logger.info("Computed turning window metrics")
+    logger.info("Computed turning window metrics.")
 
+    # Interpolates steering angle where possible.
     df = interpolate_steering(df)
-    logger.info("Interpolating steering data")
+    logger.info("Interpolating steering data.")
 
-    # Creates a summary df with index and sector_time as columns
-    summary_df = initialise_lap_summary(df)
+    # Load racing line.
+    line = read_process_line()
+    logger.info("Racing line loaded.")
+
+    # Finding deviation from racing line at each point.
+    df = racing_line_deviation(df, line)
+    logger.info("Calculated deviation from racing line.")
+
+    # Creates a summary df with index and sector_time as columns.
+    summary = initialise_lap_summary(df)
     logger.info("Created summary dataframe.")
-    return df, left, right, summary_df
+
+    # Calculates the average deviation from the racing line.
+    summary = avg_line_distance(df, summary)
+    logger.info("Calculated average distance to racing line.")
+
+    # Calculates the minimum distances to either apex.
+    summary = min_apex_distance(df, summary)
+    logger.info("Calculated minimum distance to apex 1 and 2.")
+
+    return df, left, right, line, summary
