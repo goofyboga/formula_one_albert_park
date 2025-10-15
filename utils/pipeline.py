@@ -156,7 +156,7 @@ def read_process_line(path=None):
     return line
 
 
-def interpolate_steering(df):
+def interpolate_wheel_angle(df):
     df["M_FRONTWHEELSANGLE"] = (
         df.groupby(["lap_index"])["M_FRONTWHEELSANGLE"]
         .transform(lambda g: g.interpolate(method="linear"))
@@ -492,11 +492,11 @@ def first_braking_point(df, summary, brake_thresh=0.2):
     return summary
 
 
-def first_turning_point(df, summary, turn_thresh=10):
+def first_turning_point(df, summary, turn_thresh=0.2):
     rows = []
     for i in df["lap_index"].unique():
         lap = df[df["lap_index"] == i]
-        turning_points = lap[lap["M_FRONTWHEELSANGLE"].abs() > turn_thresh]
+        turning_points = lap[lap["M_STEER_1"].abs() > turn_thresh]
         if not turning_points.empty:
             first_turn = turning_points.iloc[0]
             rows.append(
@@ -504,7 +504,7 @@ def first_turning_point(df, summary, turn_thresh=10):
                     i,
                     first_turn["M_WORLDPOSITIONX_1"],
                     first_turn["M_WORLDPOSITIONY_1"],
-                    first_turn["M_FRONTWHEELSANGLE"],
+                    first_turn["M_STEER_1"],
                 )
             )
         else:
@@ -567,7 +567,7 @@ def data_pipeline(path=None, left_path=None, right_path=None):
     logger.info("Computed turning window metrics.")
 
     # Interpolates steering angle where possible.
-    df = interpolate_steering(df)
+    df = interpolate_wheel_angle(df)
     logger.info("Interpolating steering data.")
 
     # Load racing line.
