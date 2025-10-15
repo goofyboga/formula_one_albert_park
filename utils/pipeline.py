@@ -257,16 +257,16 @@ def initialise_lap_summary(df):
         mins, secs = t.split(":")
         return float(mins) * 60 + float(secs)
 
-    summary_rows = []
+    rows = []
 
-    for lap_idx in df["lap_index"].unique():
-        lap = df[df["lap_index"] == lap_idx].sort_values("M_LAPDISTANCE_1")
+    for i in df["lap_index"].unique():
+        lap = df[df["lap_index"] == i].sort_values("M_LAPDISTANCE_1")
         start_time = time_to_seconds(lap.iloc[0]["CURRENTLAPTIME"])
         end_time = time_to_seconds(lap.iloc[-1]["CURRENTLAPTIME"])
         sector_time = end_time - start_time
-        summary_rows.append({"lap_index": lap_idx, "sector_time": sector_time})
+        rows.append({"lap_index": i, "sector_time": sector_time})
 
-    summary = pd.DataFrame(summary_rows)
+    summary = pd.DataFrame(rows)
     return summary
 
 
@@ -429,7 +429,9 @@ def min_apex_distance(df, summary):
 
 def add_avg_brake_pressure(df, summary):
     avg = (
-        df.groupby("lap_index")["M_BRAKE"].mean().reset_index(name="avg_brake_pressure")
+        df.groupby("lap_index")["M_BRAKE_1"]
+        .mean()
+        .reset_index(name="avg_brake_pressure")
     )
     summary = summary.merge(avg, on="lap_index", how="left")
     return summary
@@ -437,7 +439,7 @@ def add_avg_brake_pressure(df, summary):
 
 def add_avg_throttle_pressure(df, summary):
     avg = (
-        df.groupby("lap_index")["M_THROTTLE"]
+        df.groupby("lap_index")["M_THROTTLE_1"]
         .mean()
         .reset_index(name="avg_throttle_pressure")
     )
@@ -447,7 +449,9 @@ def add_avg_throttle_pressure(df, summary):
 
 def add_peak_brake_pressure(df, summary):
     peak = (
-        df.groupby("lap_index")["M_BRAKE"].max().reset_index(name="peak_brake_pressure")
+        df.groupby("lap_index")["M_BRAKE_1"]
+        .max()
+        .reset_index(name="peak_brake_pressure")
     )
     summary = summary.merge(peak, on="lap_index", how="left")
     return summary
@@ -455,11 +459,61 @@ def add_peak_brake_pressure(df, summary):
 
 def add_peak_throttle_pressure(df, summary):
     peak = (
-        df.groupby("lap_index")["M_THROTTLE"]
+        df.groupby("lap_index")["M_THROTTLE_1"]
         .max()
         .reset_index(name="peak_throttle_pressure")
     )
     summary = summary.merge(peak, on="lap_index", how="left")
+    return summary
+
+
+def first_braking_point(df, summary, brake_thresh=0.2):
+    rows = []
+    for i in df["lap_index"].unique():
+        lap = df[df["lap_index"] == i]
+        braking_points = lap[lap["M_BRAKE_1"] > brake_thresh]
+        if not braking_points.empty:
+            first_brake = braking_points.iloc[0]
+            rows.append(
+                (
+                    i,
+                    first_brake["M_WORLDPOSITIONX_1"],
+                    first_brake["M_WORLDPOSITIONY_1"],
+                    first_brake["M_BRAKE_1"],
+                )
+            )
+        else:
+            rows.append((i, None, None, 0))
+
+    brake_df = pd.DataFrame(
+        rows, columns=["lap_index", "brake_x", "brake_y", "brake_pressure"]
+    )
+    summary = pd.merge(summary, brake_df, on="lap_index", how="left")
+    return summary
+
+
+def first_turning_point(df, summary, turn_thresh=10):
+    rows = []
+    for i in df["lap_index"].unique():
+        lap = df[df["lap_index"] == i]
+        turning_points = lap[lap["M_FRONTWHEELSANGLE"].abs() > turn_thresh]
+        if not turning_points.empty:
+            first_turn = turning_points.iloc[0]
+            rows.append(
+                (
+                    i,
+                    first_turn["M_WORLDPOSITIONX_1"],
+                    first_turn["M_WORLDPOSITIONY_1"],
+                    first_turn["M_FRONTWHEELSANGLE"],
+                )
+            )
+        else:
+            rows.append((i, None, None, 0))
+
+    turn_df = pd.DataFrame(
+        rows, columns=["lap_index", "turn_x", "turn_y", "steering_angle"]
+    )
+    summary = pd.merge(summary, turn_df, on="lap_index", how="left")
     return summary
 
 
@@ -536,14 +590,20 @@ def data_pipeline(path=None, left_path=None, right_path=None):
     summary = min_apex_distance(df, summary)
     logger.info("Calculated minimum distance to apex 1 and 2.")
 
-    # Calculating average brake and throttle pressure
+    # Calculating average brake and throttle pressure.
     summary = add_avg_brake_pressure(df, summary)
     summary = add_avg_throttle_pressure(df, summary)
     logger.info("Calculated average brake and throttle pressure per lap.")
 
-    # Calculating max brake and throttle pressure
+    # Calculating max brake and throttle pressure.
     summary = add_peak_brake_pressure(df, summary)
     summary = add_peak_throttle_pressure(df, summary)
     logger.info("Calculated peak brake and throttle pressure per lap.")
 
+    # Calculating brake and turning points.
+    summary = first_braking_point(df, summary)
+    summary = first_turning_point(df, summary)
+    logger.info("Braking point calculated")
+
+    logger.info("Pipeline Complete.... Happy Exploring :-)")
     return df, left, right, line, summary
