@@ -415,8 +415,8 @@ def min_apex_distance(df, summary):
         lap = df[df["lap_index"] == i]
         lap_points = lap[["M_WORLDPOSITIONX_1", "M_WORLDPOSITIONY_1"]].to_numpy()
         tree = cKDTree(lap_points)
-        distance1, _ = tree.query(p1[0], p1[1])
-        distance2, _ = tree.query(p2[0], p2[1])
+        distance1, _ = tree.query((p1[0], p1[1]))
+        distance2, _ = tree.query((p2[0], p2[1]))
 
         distances.loc[size] = (i, distance1, distance2)
 
