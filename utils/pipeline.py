@@ -403,23 +403,20 @@ def avg_line_distance(df, summary):
 
 
 def min_apex_distance(df, summary):
-    size = 0
     p1 = (375.57, 191.519)
-    col1 = "min_dist_apex1"
-
     p2 = (368.93, 90.0)
-    col2 = "min_dist_apex2"
-
-    distances = pd.DataFrame(["lap_index", col1, col2])
+    rows = []
     for i in df["lap_index"].unique():
         lap = df[df["lap_index"] == i]
         lap_points = lap[["M_WORLDPOSITIONX_1", "M_WORLDPOSITIONY_1"]].to_numpy()
         tree = cKDTree(lap_points)
         distance1, _ = tree.query((p1[0], p1[1]))
         distance2, _ = tree.query((p2[0], p2[1]))
+        rows.append((i, distance1, distance2))
 
-        distances.loc[size] = (i, distance1, distance2)
-
+    distances = pd.DataFrame(
+        rows, columns=["lap_index", "dist_to_apex1", "dist_to_apex2"]
+    )
     summary = pd.merge(summary, distances, on="lap_index", how="inner")
 
     return summary
