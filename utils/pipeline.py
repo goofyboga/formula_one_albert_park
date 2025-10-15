@@ -207,16 +207,20 @@ def enforce_track_limits(df, left, right):
     return df
 
 
-def remove_short_laps(df, min_points=700):
-    """Remove laps that have fewer than min_points telemetry points."""
-    # Count points per lap
-    lap_counts = df.groupby("lap_index").size().reset_index(name="n_points")
+def remove_stuttery_laps(df, min_points=500):
+    # Drop duplicate positions within each lap
+    df_unique = df.drop_duplicates(
+        subset=["lap_index", "M_WORLDPOSITIONX_1", "M_WORLDPOSITIONY_1"]
+    )
 
-    # Keep only laps with enough points
+    # Count distinct points per lap
+    lap_counts = df_unique.groupby("lap_index").size().reset_index(name="n_points")
+
+    # Keep only laps with enough distinct points
     valid_laps = lap_counts[lap_counts["n_points"] >= min_points]["lap_index"]
+    df_clean = df[df["lap_index"].isin(valid_laps)]
 
-    df = df[df["lap_index"].isin(valid_laps)]
-    return df
+    return df_clean
 
 
 def compute_turning_window(df):
@@ -464,7 +468,7 @@ def data_pipeline(path=None, left_path=None, right_path=None):
     logger.info("Enforced track limits.")
 
     # Remove laps with too few data points.
-    df = remove_short_laps(df)
+    df = remove_stuttery_laps(df)
     logger.info("Removed laps with insufficient data.")
 
     # Compute turning window metrics.
