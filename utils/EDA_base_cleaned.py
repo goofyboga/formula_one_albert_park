@@ -14,72 +14,72 @@ Steps:
 
 
 def preprocess_f1_data(f1_main_df):
-    # """
-    # Defines a helper function plot_track_rotated that rotates track position coordinates by a
-    # specified angle and plots them. Useful for visualizing the circuit with corrected orientation.
+    """
+    Defines a helper function plot_track_rotated that rotates track position coordinates by a
+    specified angle and plots them. Useful for visualizing the circuit with corrected orientation.
 
-    # Example Usage: plot_track_rotated(f1_main_df, angle_deg=135)
-    # """
+    Example Usage: plot_track_rotated(f1_main_df, angle_deg=135)
+    """
 
-    # def plot_track_rotated(
-    #     df, x_col="M_WORLDPOSITIONX_1", y_col="M_WORLDPOSITIONY_1", angle_deg=0
-    # ):
-    #     # Convert angle to radians
-    #     theta = np.radians(angle_deg)
+    def plot_track_rotated(
+        df, x_col="M_WORLDPOSITIONX_1", y_col="M_WORLDPOSITIONY_1", angle_deg=0
+    ):
+        # Convert angle to radians
+        theta = np.radians(angle_deg)
 
-    #     # Original coordinates
-    #     x = df[x_col].values
-    #     y = df[y_col].values
+        # Original coordinates
+        x = df[x_col].values
+        y = df[y_col].values
 
-    #     # Rotate
-    #     x_rot = x * np.cos(theta) + y * np.sin(theta)
-    #     y_rot = -x * np.sin(theta) + y * np.cos(theta)
+        # Rotate
+        x_rot = x * np.cos(theta) + y * np.sin(theta)
+        y_rot = -x * np.sin(theta) + y * np.cos(theta)
 
-    #     # Plot
-    #     plt.figure(figsize=(10, 8))
-    #     plt.scatter(x_rot, y_rot, s=2, alpha=0.6, c="blue")
-    #     plt.xlabel(f"{x_col} (rotated)")
-    #     plt.ylabel(f"{y_col} (rotated)")
-    #     plt.title(f"Car Position Rotated {angle_deg}° Clockwise")
-    #     plt.axis("equal")
-    #     plt.show()
+        # Plot
+        plt.figure(figsize=(10, 8))
+        plt.scatter(x_rot, y_rot, s=2, alpha=0.6, c="blue")
+        plt.xlabel(f"{x_col} (rotated)")
+        plt.ylabel(f"{y_col} (rotated)")
+        plt.title(f"Car Position Rotated {angle_deg}° Clockwise")
+        plt.axis("equal")
+        plt.show()
 
-    # """
-    # FILTERS: Applies data quality filters to retain only Melbourne laps, valid laps, valid racing 
-    # status rows, and realistic sector times. Also restricts data to turns 1 and 2 for focused analysis.
-    # """
-    # # Filter for Melbourne track ID only
-    # melbourne_df = f1_main_df[
-    #     (f1_main_df["M_TRACKID"] == 0) & (f1_main_df["R_TRACKID"] == 0)
-    # ]
+    """
+    FILTERS: Applies data quality filters to retain only Melbourne laps, valid laps, valid racing 
+    status rows, and realistic sector times. Also restricts data to turns 1 and 2 for focused analysis.
+    """
+    # Filter for Melbourne track ID only
+    melbourne_df = f1_main_df[
+        (f1_main_df["M_TRACKID"] == 0) & (f1_main_df["R_TRACKID"] == 0)
+    ]
 
-    # # Drop invalid laps
-    # melbourne_df = melbourne_df[
-    #     (melbourne_df["M_CURRENTLAPINVALID_1"] == 0)
-    #     & (melbourne_df["M_LAPINVALID"] == 0)
-    # ]
+    # Drop invalid laps
+    melbourne_df = melbourne_df[
+        (melbourne_df["M_CURRENTLAPINVALID_1"] == 0)
+        & (melbourne_df["M_LAPINVALID"] == 0)
+    ]
 
-    # # Keep only valid racing status rows
-    # melbourne_df = melbourne_df[(melbourne_df["M_DRIVERSTATUS_1"] == 1)]
+    # Keep only valid racing status rows
+    melbourne_df = melbourne_df[(melbourne_df["M_DRIVERSTATUS_1"] == 1)]
 
-    # # Drop NaNs coordinates
-    # melbourne_df = melbourne_df.dropna(
-    #     subset=["M_WORLDPOSITIONX_1", "M_WORLDPOSITIONY_1", "M_WORLDPOSITIONZ_1"]
-    # )
+    # Drop NaNs coordinates
+    melbourne_df = melbourne_df.dropna(
+        subset=["M_WORLDPOSITIONX_1", "M_WORLDPOSITIONY_1", "M_WORLDPOSITIONZ_1"]
+    )
 
-    # # Drop negative lap distance
-    # melbourne_df = melbourne_df[(melbourne_df["M_LAPDISTANCE_1"] >= 0)]
+    # Drop negative lap distance
+    melbourne_df = melbourne_df[(melbourne_df["M_LAPDISTANCE_1"] >= 0)]
 
-    # # Limit data to turns 1 and 2 only
-    # melbourne_df = melbourne_df[melbourne_df["TURN"].isin([1, 2])]
+    # Limit data to turns 1 and 2 only
+    melbourne_df = melbourne_df[melbourne_df["TURN"].isin([1, 2])]
 
-    # """
-    # SORTING: Sorts all rows by the current time within a lap (per session) to ensure chronology
-    # """
-    # # Sort each lap per session by time
-    # melbourne_df = melbourne_df.sort_values(
-    #     by=["M_SESSIONUID", "M_CURRENTLAPNUM", "M_CURRENTLAPTIMEINMS_1"], ascending=True
-    # )
+    """
+    SORTING: Sorts all rows by the current time within a lap (per session) to ensure chronology
+    """
+    # Sort each lap per session by time
+    melbourne_df = melbourne_df.sort_values(
+        by=["M_SESSIONUID", "M_CURRENTLAPNUM", "M_CURRENTLAPTIMEINMS_1"], ascending=True
+    )
 
     """
     TARGET VARIABLE: Creates a target variable (exit_T2_speed) by capturing the last recorded speed 
