@@ -54,6 +54,10 @@ def telemetry_eng(df):
     df = front_wheel_vs_car_direction(df)
     logger.info("Calculated front wheel vs car direction angle.")
 
+    df = compute_brake_balance(df)
+    df = compute_tyre_balance(df)
+    logger.info("Computed brake and tyre balance.")
+
     return df, line
 
 
@@ -382,5 +386,78 @@ def recompute_velocity_and_gforce(df: pd.DataFrame) -> pd.DataFrame:
         df[f"GFORCE_{axis}"] = df.groupby("lap_index")[f"GFORCE_{axis}"].transform(
             lambda g: g.interpolate(method="linear").ffill().bfill()
         )
+
+    return df
+
+
+def compute_brake_balance(df):
+    """
+    Computes advanced brake temperature balance metrics.
+        - brake_front_rear_diff: Avg(front) - Avg(rear)
+            Indicates brake bias. Positive = front-biased (risk of understeer),
+            Negative = rear-biased (risk of oversteer).
+
+        - brake_left_right_diff: Avg(left) - Avg(right)
+            Indicates lateral braking imbalance. Positive = left brakes hotter
+            (often due to more right-hand cornering or uneven braking effort).
+    """
+    # Front vs rear average
+    df["brake_front_avg"] = (
+        df["M_BRAKESTEMPERATURE_FL_1"] + df["M_BRAKESTEMPERATURE_FR_1"]
+    ) / 2
+    df["brake_rear_avg"] = (
+        df["M_BRAKESTEMPERATURE_RL_1"] + df["M_BRAKESTEMPERATURE_RR_1"]
+    ) / 2
+    df["brake_front_rear_diff"] = df["brake_front_avg"] - df["brake_rear_avg"]
+
+    # Left vs right average
+    df["brake_left_avg"] = (
+        df["M_BRAKESTEMPERATURE_FL_1"] + df["M_BRAKESTEMPERATURE_RL_1"]
+    ) / 2
+    df["brake_right_avg"] = (
+        df["M_BRAKESTEMPERATURE_FR_1"] + df["M_BRAKESTEMPERATURE_RR_1"]
+    ) / 2
+    df["brake_left_right_diff"] = df["brake_left_avg"] - df["brake_right_avg"]
+
+    df.drop(
+        columns=[
+            "brake_front_avg",
+            "brake_rear_avg",
+            "brake_left_avg",
+            "brake_right_avg",
+        ],
+        inplace=True,
+    )
+
+    return df
+
+
+def compute_tyre_balance(df):
+    """
+    Computes advanced tyre pressure balance metrics.
+
+    Features created:
+        tyre_front_rear_diff: Avg(front) - Avg(rear)
+            Indicates longitudinal pressure balance.
+            Positive = front tyres more inflated (sharper steering, less grip),
+            Negative = rear tyres more inflated (can induce oversteer).
+
+        tyre_left_right_diff: Avg(left) - Avg(right)
+            Indicates lateral balance or asymmetric corner loading.
+    """
+    # Front vs rear average
+    df["tyre_front_avg"] = (df["M_TYRESPRESSURE_FL_1"] + df["M_TYRESPRESSURE_FR_1"]) / 2
+    df["tyre_rear_avg"] = (df["M_TYRESPRESSURE_RL_1"] + df["M_TYRESPRESSURE_RR_1"]) / 2
+    df["tyre_front_rear_diff"] = df["tyre_front_avg"] - df["tyre_rear_avg"]
+
+    # Left vs right average
+    df["tyre_left_avg"] = (df["M_TYRESPRESSURE_FL_1"] + df["M_TYRESPRESSURE_RL_1"]) / 2
+    df["tyre_right_avg"] = (df["M_TYRESPRESSURE_FR_1"] + df["M_TYRESPRESSURE_RR_1"]) / 2
+    df["tyre_left_right_diff"] = df["tyre_left_avg"] - df["tyre_right_avg"]
+
+    df.drop(
+        columns=["tyre_front_avg", "tyre_rear_avg", "tyre_left_avg", "tyre_right_avg"],
+        inplace=True,
+    )
 
     return df
