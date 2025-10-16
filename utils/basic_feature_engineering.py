@@ -38,8 +38,38 @@ def basic_features(df):
     """
     # [FEATURE CODE]
 
+def compute_turning_window(df):
+    """
+    Defines the *turning window* around each apex (T1 and T2) based on distance thresholds.
+    
+    This function computes the car's distance from each turn apex and creates binary flags 
+    that indicate whether the car is within the "turning zone" (a circular region around the apex).
+    """
+    # Apex coordinates
+    t1_apex = (375.57, 191.519)
+    t2_apex = (368.93, 90)
+    turn_radius = 50  # meters
+
+    # Compute distance to each apex
+    df["dist_to_t1_apex"] = np.sqrt(
+        (df["M_WORLDPOSITIONX_1"] - t1_apex[0])**2 +
+        (df["M_WORLDPOSITIONY_1"] - t1_apex[1])**2
+    )
+
+    df["dist_to_t2_apex"] = np.sqrt(
+        (df["M_WORLDPOSITIONX_1"] - t2_apex[0])**2 +
+        (df["M_WORLDPOSITIONY_1"] - t2_apex[1])**2
+    )
+
+    # Binary columns indicating if point is inside turning window
+    df["is_t1_window"] = df["dist_to_t1_apex"] <= turn_radius
+    df["is_t2_window"] = df["dist_to_t2_apex"] <= turn_radius
+    return df
+
+
 def front_wheel_vs_velocity(df):
     """
+    Measures understeer or slip.
     Calculates the angle between the **front wheel direction** and the **car's velocity vector**.
     
     Interpretation:
@@ -78,6 +108,7 @@ def front_wheel_vs_velocity(df):
 
 def car_direction_vs_velocity(df):
     """
+    Measures oversteer, drift and slide.
     Calculates the angle between the **car's facing direction** and its **velocity vector**.
     
     Interpretation:
@@ -109,6 +140,7 @@ def car_direction_vs_velocity(df):
 
 def front_wheel_vs_car_direction(df):
     """
+    Measures steering aggression and responsiveness.
     Calculates the angle between the **front wheel direction** and the **car's facing direction**.
     
     Interpretation:
@@ -135,3 +167,4 @@ def front_wheel_vs_car_direction(df):
     df["angle_fw_vs_car"] = np.where(df["angle_fw_vs_car"] > 90, 180 - df["angle_fw_vs_car"], df["angle_fw_vs_car"])
 
     return df
+
