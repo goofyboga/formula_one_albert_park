@@ -1,6 +1,6 @@
 # Adds the imports
 import pandas as pd
-from utils.pipeline import data_pipeline
+from pipeline.pipeline import data_pipeline
 import os
 
 # Getting the data into pandas dataframes
