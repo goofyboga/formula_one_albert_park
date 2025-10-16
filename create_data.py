@@ -1,13 +1,24 @@
 # Adds the imports
-import pandas
-from utils.pipeline import data_pipeline, read_data
+import pandas as pd
+from utils.pipeline import data_pipeline
 import os
 
-data, left, right, summary = data_pipeline()
+# Getting the data into pandas dataframes
+data, left, right, line, summary = data_pipeline()
 
-for path in ["data/telemetry.csv", "data/summary.csv"]:
+# Make sure output directory exists
+output_dir = "output"
+os.makedirs(output_dir, exist_ok=True)
+
+# Define output file paths
+telemetry_path = os.path.join(output_dir, "telemetry.csv")
+summary_path = os.path.join(output_dir, "summary.csv")
+
+# Remove existing files if they exist
+for path in [telemetry_path, summary_path]:
     if os.path.exists(path):
         os.remove(path)
 
-data.to_csv("data/telemetry.csv", index=False)
-summary.to_csv("data/summary.csv", index=False)
+# Save outputs
+data.to_csv(telemetry_path, index=False)
+summary.to_csv(summary_path, index=False)
