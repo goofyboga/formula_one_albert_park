@@ -74,13 +74,13 @@ We decided to engineer some features that will provide point-level telemetry int
   <img src="image.png" alt="T1 Braking Behavior Comparison during Turning" width="800"/>
 </p>
 
-`angle_car_vs_vel` – Car’s Facing Direction vs. Velocity Vector
+1) `angle_car_vs_vel` – Car’s Facing Direction vs. Velocity Vector
 This feature quantifies slip angle or the difference between where the car is pointing and where it’s actually moving. It serves as a powerful indicator of yaw control and chassis stability through a corner. Small angles suggest the car is tracking smoothly with high grip, while larger angles reflect sliding or oversteer moments where the rear rotates beyond the intended line. Top drivers tend to allow a brief, controlled increase in this angle just before the apex to help rotate the car, then minimize it on exit to regain traction. angle_car_vs_vel captures how efficiently a driver manages yaw to balance rotation and stability through a turn.
 
-`angle_fw_vs_vel` – Front Wheel Direction vs. Velocity Vector
+2) `angle_fw_vs_vel` – Front Wheel Direction vs. Velocity Vector
 This feature measures how well the car’s actual motion aligns with the direction the front wheels are pointing. It’s a direct reflection of front-end grip and steering efficiency — larger deviations imply understeer or tire slip, where the wheels are turned but the car resists rotation. During turn-in, this angle peaks as the driver loads the front tires, before decreasing once the car rotates and stabilizes mid-corner. Our EDA showed that the best laps often show quick, short-lived peaks followed by smooth convergence, indicating precise and confident steering. angle_fw_vs_vel therefore reveals how effectively the driver’s steering input translates into directional change, making it invaluable for analyzing corner entry technique and tire performance.
 
-`angle_fw_vs_car` – Front Wheel Direction vs. Car Facing Direction
+3) `angle_fw_vs_car` – Front Wheel Direction vs. Car Facing Direction
 This feature isolates the driver’s steering input magnitude, showing how far the front wheels are turned relative to the car’s forward direction. High values indicate aggressive or corrective oversteering, while smaller values reflect smoother, more stable cornering. Around Turn 1, this metric typically rises sharply at turn-in, oscillates slightly through the apex (representing micro-adjustments), and falls back to zero on corner exit as the car straightens. By comparing angle_fw_vs_car to the two previous features, we can distinguish between driver-induced behavior (intent) and vehicle dynamics (response), offering a clear picture of how steering input quality affects rotation, balance and time.
 
 <p align="center">
@@ -88,7 +88,9 @@ This feature isolates the driver’s steering input magnitude, showing how far t
 </p>
 
 1) Early and lower average braking: Top drivers begin braking earlier and with lower peak pressure, allowing smoother deceleration and better front-end grip. In contrast, average drivers maintain higher brake pressure later, taking up to 40m post-apex before reaching zero input, whereas top drivers reach zero brake input around -18 m at the pre-apex.
+
 2) Multi-tap brake modulation: Top drivers display a multi-tap or oscillating brake pattern leading into the apex (see purple Top Braking line where this occurred 3 times from -50m to -20m), reflecting precise modulation to balance weight transfer, maintain optimal tire slip, and prepare the car for rotation into the corner. Average drivers tend to apply a more constant, monotonic brake input.
+
 3) Apex brake adjustment / Yaw control: Top drivers briefly reapply a small amount of brake at the apex itself to control yaw, fine-tuning the car’s rotation at the moment of minimum longitudinal load and maximizing exit potential (see hump at T1 apex). Average drivers’ sustained brake input delays rotation and reduces exit speed.
 Together, these behaviors of early, modulated braking, precise timing of zero input, and subtle pre-apex taps demonstrate advanced control of weight transfer, tire friction, and car balance, explaining why top drivers can carry more speed through the corner by utilising pragmatic braking while maintaining stability.
 
