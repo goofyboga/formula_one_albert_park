@@ -23,19 +23,13 @@ The script will produce telemetry.csv, summary.csv, left.csv, right.csv, line.cs
 
 
 ### Workflow
-Data cleaning: In order to ensure the product is stable and has no unusable rows, we removed some some parts of the data. Most importantly, Invalid laps, laps that were not on the Melbourne track, laps where driver status was invalid were all dropped. Some columns had missing values that were interpolated linearly or forward/backward filled. 
+Data cleaning: In order to ensure the product is stable and has no unusable rows, we removed some some parts of the data. Most importantly, Invalid laps, laps that were not on the Melbourne track, laps where driver went too far off trac or there was not enough data were also dropped.  
 
-Crucially rows are grouped by `M_SESSIONUID` then `M_CURRENTLAPNUM` for indiscriminated lap to lap analysis, after relative independence and minimal correlation of the lap number was confirmed. 
+Crucially rows are grouped by `lap_index` for indiscriminated lap to lap analysis, after relative independence and minimal correlation of the lap number was confirmed. 
 
-The data was sorted based on the variable `CURRENTLAPTIME` in order to make plotting simpler. Since the focus of the case study is the exit velocity coming out of Turn 1 and 2 into Turn 3, the data was limited to only include points that can be classified by the column `TURN` to be part of turn 1 or 2. 
+The start and finish lines were calculated in order to find efficient cuttoffs for the parts of the laps we wished to analyse. This made target engineering straightforward. Given the goal of this data project, we decided that the time taken to complete this section of the track would be an apt target variable. 
 
-Target engineering: Given the goal of this data project, we decided that the speed of the car when exiting the second turn was of paramount importance and is a good pick to be the target variable. The column, `exit_T2_speed` contains the target variable.
-
-Feature engineering: In order to aid univariate and multivariate exploratory analysis, features that pertained to velocity, g-force, braking and throttling. 
-
-Univariate Analysis: In order to gain insight into the most useful features in the data when predicting the target variable, univariate analysis will be conducted agains the target variable.
-
-Multivariate Analysis: To find the most important features to be used in any modelling applications, the team has decided to conduct analysis between features, we will ensure that highly correlated variables are filtered and delt with accordingly.
+Feature engineering: In order to aid univariate and multivariate exploratory analysis, features that pertained to velocity, g-force, braking and throttling were interpolated. While other stats were created from scratch. Features regarding the lap span two data sets. telemetry.csv, which provide point-by-point detailed insight into each lap, while summary.csv provides high level insight into the laps, highlighting key moments. 
 
 
 ### Data Description
