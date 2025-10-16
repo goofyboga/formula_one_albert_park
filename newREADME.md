@@ -96,14 +96,15 @@ Together, these behaviors of early, modulated braking, precise timing of zero in
 
 ### 3.8 Assisted passing conditions
 Gear + RPM trace the power delivery profile.DRS delineates aero state changes that affect top-speed zones.Steering Angle captures driver precision and car balance in direction changes.Together they form the rhythm of braking–turn-in–power-on, the fundamental cycle of lap-time optimization through the two corners.
-
-Gear
+<p align="center">
+  <img src="GEAR_DRS_RPM_STEER.png"
+1) Gear
 High gears (7-8) represent full throttle on a straight; downshifting to 5-6 is braking for cornering; sequential upshifts resume acceleration after exiting a corner. Gear changes correspond to deceleration and acceleration phases: downshifting assists braking, upshifting restores speed.
-Engine RPM
+2) Engine RPM
 Speed ​​changes with throttle and gear. Speed ​​decreases in braking zones, reflecting throttle release and braking; peak speed increases when DRS is engaged. This reflects traction and throttle control during cornering.
-DRS (Drag-Reduction System)
+3) DRS (Drag-Reduction System)
 Green line = 1 indicates DRS on (straight); 0 indicates off (cornering). It is off before T1 to ensure stability, briefly engaged on the straight from T1 to T2, and then off again before T2.
-Steering Angle
+4) Steering Angle
 Small fluctuations represent fine-tuning in a straight line; larger positive/negative deflections correspond to T1 cornering and countersteering during T2; a return to 0 indicates a positive exit from the corner.
 
 ### 3.9 Data Creation
