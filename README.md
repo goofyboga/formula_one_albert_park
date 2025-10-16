@@ -7,6 +7,20 @@ This project processes raw F1 telemetry data into an analytical dataset focused 
 #### Sources
 2023 F1 Australian Grand Prix Telemetry in Melbourne Albert Park
 
+### Data Creation
+In order to create and access the dataproduct. You must run create_data.py in the root of this repository. This script expects the following file structure. 
+
+data3001-data-f1-7/
+├── create_data.py
+└── data/
+    ├── f1sim-ref-left.csv
+    ├── f1sim-ref-right.csv
+    ├── f1sim-ref-line.csv
+    └── UNSW F12024.csv
+
+The script will produce telemetry.csv, summary.csv, left.csv, right.csv, line.csv. the most important products are telemetry.csv, which is the point-by-point lap data, and summary.csv, which is the high-level overview of each lap. 
+
+
 ### Workflow
 Data cleaning: In order to ensure the product is stable and has no unusable rows, we removed some some parts of the data. Most importantly, Invalid laps, laps that were not on the Melbourne track, laps where driver status was invalid were all dropped. Some columns had missing values that were interpolated linearly or forward/backward filled. 
 
