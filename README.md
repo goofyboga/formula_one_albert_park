@@ -11,17 +11,11 @@ This project processes raw F1 telemetry data into an analytical dataset focused 
 In order to create and access the dataproduct. You must run create_data.py in the root of this repository. This script expects the following file structure. 
 
     data3001-data-f1-7/
-    
         ├── create_data.py
-    
         └── data/
-    
             ├── f1sim-ref-left.csv
-        
             ├── f1sim-ref-right.csv
-        
             ├── f1sim-ref-line.csv
-        
             └── UNSW F12024.csv
 
 
