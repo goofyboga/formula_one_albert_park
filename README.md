@@ -5,7 +5,7 @@
 This project processes raw F1 telemetry data into an analytical dataset focused on optimizing vehicle dynamics at Melbourne's Albert Park Circuit. Strong cornering performance creates overtaking opportunities on the long straights and significantly impacts overall lap times. Specifically, we analyze how Temperature and pressure, position, throttle, brake and related controls, rotation and direction, speed and gravity, other dynamic data impact cornering speed and lap times.
 
 #### Sources
-2023 F1 Australian Grand Prix Telemetry in Melbourne Albert Park
+f1sim-ref-left.csv, f1sim-ref-right.csv, f1sim-ref-line.csv, UNSW F12024.csv
 
 ### Data Creation
 In order to create and access the dataproduct. You must run create_data.py in the root of this repository. This script expects the following file structure. 
