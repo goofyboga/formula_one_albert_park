@@ -63,7 +63,9 @@ Finally, the summary_eng() function orchestrates all the above computations to p
 ### 3.7 Telemetry Feature Engineering
 We decided to engineer some features that will provide point-level telemetry into interpretable, modelling-ready features that describe how the car is driven through Turns 1–2. Instead of only relying on lap aggregates, we compute per-sample signals that capture driver behaviour, vehicle dynamics, and line efficiency. These features power visual analyses and serve as inputs for downstream models that relate control inputs and trajectory to outcomes like corner-exit speed or sector time.
 
-///////////////////////////img
+<p align="center">
+  <img src="image.png" alt="T1 Braking Behavior Comparison during Turning" width="800"/>
+</p>
 
 angle_car_vs_vel – Car’s Facing Direction vs. Velocity Vector
 This feature quantifies slip angle or the difference between where the car is pointing and where it’s actually moving. It serves as a powerful indicator of yaw control and chassis stability through a corner. Small angles suggest the car is tracking smoothly with high grip, while larger angles reflect sliding or oversteer moments where the rear rotates beyond the intended line. Top drivers tend to allow a brief, controlled increase in this angle just before the apex to help rotate the car, then minimize it on exit to regain traction. angle_car_vs_vel captures how efficiently a driver manages yaw to balance rotation and stability through a turn.
