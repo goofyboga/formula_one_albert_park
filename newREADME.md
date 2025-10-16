@@ -37,19 +37,21 @@ Upon initial exploration and plotting, we observed that the dataset contained la
 ### 3.3 Lap Structuring
 After cleaning the positional data, we structured the dataset to make it easier to analyse the laps. Using the re_index() function, we created a unique lap identifier, lap_index for each session–lap pair. This was done by grouping the data by session ID and current lap number, separating the dataset into distinct laps. This structure made it easier to visualise, compare, and summarise telemetry data on a per-lap basis, which is essential for subsequent analysis and modelling. 
 To further ensure data quality and consistency, we applied the remove_stuttery_laps() function to eliminate laps with an insufficient number of distinct telemetry rows. This function identifies and removes laps containing fewer than 500 unique xy-coordinate points. Such laps typically result from duplicated or incomplete telemetry recordings, where the car’s position data appears static or discontinuous. By enforcing this threshold, only laps with a sufficiently dense and continuous stream of positional data were retained, ensuring that subsequent spatial analyses and performance modelling were based on complete and reliable lap data.
-Spatial
-Track Boundaries
+
+### 3.4 Track Boundaries
 The first step in this process involved using the define_cut_line() function, which automatically calculated the start and end coordinates of the sector’s boundary lines. Beginning from a reference point on the right side of the track, define_cut_line() determined the local direction of the boundary using neighbouring points and then constructed a perpendicular line extending across to the left boundary. The result was a line segment connecting the corresponding right and left boundary points, effectively defining the geometric “cut” across the circuit that marks the start and end of the selected track sector. By deriving these boundaries programmatically, we ensured consistency and reproducibility across all laps and sessions.
+
 Once the entry and exit lines were defined, the track_slice() function was applied to the telemetry dataset. This function spatially restricted the data to the region enclosed between the start and end lines, effectively isolating the section of the track that covers Turns 1 and 2 of the Albert Park circuit. Through this process, we filtered out all other portions of the lap, allowing subsequent analyses and visualisations to focus exclusively on a consistent and well-defined track segment directly aligned with the main objective of our project.
-Removing Invalid Tracks
-Enforce_track_limits
+
+### 3.5 Remove Invalid Tracks
 During initial inspection, we noticed that several laps contained telemetry points located well outside the left and right track boundaries. According to racing regulations, a lap is considered valid only if at least one wheel of the car remains within the track limits at all times. Based on this guideline, we estimated the approximate width of a Formula 1 car and used it as a tolerance margin to determine whether a point was still within the legal track area. We then implemented the enforce_track_limits() function to validate each telemetry point against the geometric boundaries of the Albert Park circuit. Any laps containing points that exceeded these adjusted limits were removed, ensuring that the final dataset represented only valid, on-track driving behaviour suitable for further analysis and modelling.
 
 
-Lap Summary and Feature Aggregation
+### 3.6 Lap Summary and Feature Aggregation
 Instead of analysing thousands of individual data points, we decided to condense each lap into a single row containing representative statistics such as average line deviation, braking and throttle behaviour, and proximity to key corners. This approach simplifies performance comparison between laps, drivers, or sessions and provides a modelling-ready dataset for regression or clustering analysis.
 The initialise_lap_summary() function creates the foundational summary DataFrame, recording each lap’s index and total sector time. This is achieved by calculating the time difference between the first and last recorded timestamps (CURRENTLAPTIME) for each lap. This metric serves as a baseline measure of overall lap duration and enables subsequent analysis of how various features relate to performance time.
 The avg_line_distance() function adds a measure of spatial consistency by computing the average deviation from the racing line for each lap. It groups all telemetry points by lap_index and averages their perpendicular distances to the reference line, giving an indicator of how closely a driver followed the optimal path through the circuit. Smaller average distances suggest better adherence to the ideal line and, generally, higher performance consistency.
+
 The min_apex_distance() function calculates the minimum distance to each apex (Turns 1 and 2) for every lap. By using a KD-Tree nearest-neighbour search, it determines how close a driver’s trajectory came to the ideal apex points. This helps quantify cornering precision — laps that approach the apex more closely are typically associated with smoother and faster cornering performance.
 The add_avg_brake_pressure() and add_avg_throttle_pressure() functions compute the mean brake and throttle pressures across each lap. These values summarize a driver’s overall input style — for example, whether a lap involved aggressive braking or smooth, consistent throttle application. Such aggregates are useful for distinguishing different driving strategies and their influence on lap time.
 The add_peak_brake_pressure() and add_peak_throttle_pressure() functions record the maximum brake and throttle inputs within each lap. These features capture extremes of driver control and can reveal how much braking force or acceleration was applied in key segments. Comparing these peak values across laps helps assess consistency in control inputs and vehicle dynamics under varying cornering conditions.
@@ -58,31 +60,28 @@ Similarly, the first_turning_point() function detects the first steering action 
 Finally, the summary_eng() function orchestrates all the above computations to produce the completed lap summary dataset. It integrates each lap’s timing, geometric, and control-input features into a single, comprehensive table. This summary provides an interpretable, lap-level view of performance — simplifying analysis, enabling efficient visualisation, and supporting downstream modelling tasks such as predicting lap times or evaluating driver behaviour.
 
 
-Telemetry Feature Engineering
+### 3.7 Telemetry Feature Engineering
 We decided to engineer some features that will provide point-level telemetry into interpretable, modelling-ready features that describe how the car is driven through Turns 1–2. Instead of only relying on lap aggregates, we compute per-sample signals that capture driver behaviour, vehicle dynamics, and line efficiency. These features power visual analyses and serve as inputs for downstream models that relate control inputs and trajectory to outcomes like corner-exit speed or sector time.
 
-telemetry_eng(df)
-This orchestration function runs the end-to-end telemetry feature pass. It (i) marks Turn-1/Turn-2 windows around the apexes, (ii) repairs steering gaps via interpolation, (iii) loads the reference racing line and computes each sample’s distance to it, (iv) builds a composite brake–throttle signal, (v) recomputes physically consistent velocity and G-force from positions and timestamps, (vi) derives three alignment angles (front-wheel vs velocity, car direction vs velocity, and front-wheel vs car direction) to quantify under/oversteer and steering aggression, and (vii) computes brake temperature balance. The result is a single DataFrame with rich, physics-aware features that explain how a lap was driven, not just how fast it was.
-interpolate_wheel_angle(df)
-Fills small gaps in M_FRONTWHEELSANGLE within each lap using linear interpolation (plus forward/back fill). Steering is a key control input; missing values can distort angle-based features and visualisations. Interpolation produces a continuous steering signal, enabling stable angle metrics and fair comparisons across laps.
-compute_turning_window(df)
-Tags whether each sample is within a turning window around the T1 and T2 apexes using a distance threshold (e.g., 50 m). It also stores continuous distances to both apexes. These flags and distances focus analysis on the high-impact parts of the complex (entries, apexes, exits), enabling targeted summaries and models that compare behaviour inside versus outside the corners.
-racing_line_deviation(df, line)
-Computes each sample’s perpendicular distance to a reference racing line using a KD-Tree nearest-neighbour lookup. This yields line_distance, a compact measure of line adherence. Smaller distances generally indicate more efficient pathing and correlate with smoother speed retention and better exit velocities.
-brake_throttle(df)
-Creates a composite driver-input signal, M_BRAKE_THROTTLE_1 = M_THROTTLE_1 − M_BRAKE_1. This encodes the decelerate→coast→accelerate sequence on a single axis, simplifying visualisation and modelling of control strategy through the S-curve. Higher values indicate net throttle; lower values indicate net braking.
-recompute_velocity_and_gforce(df)
-Recomputes velocity (VEL_X/Y/Z) from position deltas and timestamps, then differentiates velocity to obtain G-forces (GFORCE_X/Y/Z), with clipping of unrealistic outliers and per-lap interpolation. Doing this from first principles ensures internal consistency when upstream filters or resampling have affected the original telemetry, yielding physically plausible signals for dynamics analysis.
-front_wheel_vs_velocity(df)
-Computes the angle between the front-wheel direction (car forward vector rotated by steering angle) and the velocity vector. Large deviations indicate potential understeer or tyre slip (the wheels point somewhere different to where the car is actually moving). This feature helps relate steering inputs to realised motion.
-car_direction_vs_velocity(df)
-Computes the angle between the car’s facing direction and its velocity vector. Elevated values indicate drift/slide/oversteer, where the chassis orientation and travel direction diverge. This is useful for diagnosing stability and traction through the change of direction between T1 and T2.
-front_wheel_vs_car_direction(df)
-Computes the angle between the front-wheel direction and the car’s facing direction to quantify steering aggression and responsiveness (how far the wheels are turned relative to the chassis). Peaks often align with turn-in or recovery phases and can indicate sharp corrections or sustained steering loads.
-compute_brake_balance(df)
-Derives front–rear and left–right brake temperature balance: brake_front_rear_diff (front avg − rear avg) and brake_left_right_diff (left avg − right avg). These proxies reflect brake bias and potential lateral imbalance (e.g., repeated right-handers heating left brakes more). They help connect mechanical state to handling (tendency to under/oversteer) and to driver braking style.
+///////////////////////////img
 
-### 3.Data Creation
+angle_car_vs_vel – Car’s Facing Direction vs. Velocity Vector
+This feature quantifies slip angle or the difference between where the car is pointing and where it’s actually moving. It serves as a powerful indicator of yaw control and chassis stability through a corner. Small angles suggest the car is tracking smoothly with high grip, while larger angles reflect sliding or oversteer moments where the rear rotates beyond the intended line. Top drivers tend to allow a brief, controlled increase in this angle just before the apex to help rotate the car, then minimize it on exit to regain traction. angle_car_vs_vel captures how efficiently a driver manages yaw to balance rotation and stability through a turn.
+angle_fw_vs_vel – Front Wheel Direction vs. Velocity Vector
+This feature measures how well the car’s actual motion aligns with the direction the front wheels are pointing. It’s a direct reflection of front-end grip and steering efficiency — larger deviations imply understeer or tire slip, where the wheels are turned but the car resists rotation. During turn-in, this angle peaks as the driver loads the front tires, before decreasing once the car rotates and stabilizes mid-corner. Our EDA showed that the best laps often show quick, short-lived peaks followed by smooth convergence, indicating precise and confident steering. angle_fw_vs_vel therefore reveals how effectively the driver’s steering input translates into directional change, making it invaluable for analyzing corner entry technique and tire performance.
+angle_fw_vs_car – Front Wheel Direction vs. Car Facing Direction
+This feature isolates the driver’s steering input magnitude, showing how far the front wheels are turned relative to the car’s forward direction. High values indicate aggressive or corrective oversteering, while smaller values reflect smoother, more stable cornering. Around Turn 1, this metric typically rises sharply at turn-in, oscillates slightly through the apex (representing micro-adjustments), and falls back to zero on corner exit as the car straightens. By comparing angle_fw_vs_car to the two previous features, we can distinguish between driver-induced behavior (intent) and vehicle dynamics (response), offering a clear picture of how steering input quality affects rotation, balance and time.
+
+
+///////////////////////////img
+
+1) Early and lower average braking: Top drivers begin braking earlier and with lower peak pressure, allowing smoother deceleration and better front-end grip. In contrast, average drivers maintain higher brake pressure later, taking up to 40m post-apex before reaching zero input, whereas top drivers reach zero brake input around -18 m at the pre-apex.
+2) Multi-tap brake modulation: Top drivers display a multi-tap or oscillating brake pattern leading into the apex (see purple Top Braking line where this occurred 3 times from -50m to -20m), reflecting precise modulation to balance weight transfer, maintain optimal tire slip, and prepare the car for rotation into the corner. Average drivers tend to apply a more constant, monotonic brake input.
+3) Apex brake adjustment / Yaw control: Top drivers briefly reapply a small amount of brake at the apex itself to control yaw, fine-tuning the car’s rotation at the moment of minimum longitudinal load and maximizing exit potential (see hump at T1 apex). Average drivers’ sustained brake input delays rotation and reduces exit speed.
+Together, these behaviors of early, modulated braking, precise timing of zero input, and subtle pre-apex taps demonstrate advanced control of weight transfer, tire friction, and car balance, explaining why top drivers can carry more speed through the corner by utilising pragmatic braking while maintaining stability.
+
+
+### 3.8 Data Creation
 In order to create and access the data product. You must run create_data.py in the root of this repository. This script expects the following file structure. 
 
     data3001-data-f1-7/
@@ -97,11 +96,11 @@ In order to create and access the data product. You must run create_data.py in t
 The script will produce telemetry.csv, summary.csv, left.csv, right.csv, line.csv. the most important products are telemetry.csv, which is the point-by-point lap data, and summary.csv, which is the high-level overview of each lap. 
 
 
-### Data Description
-
-Data Description
+## 4. Data Description
 After the complete cleaning and spatial filtering process, the final dataset consists of approximately 774,772 rows and 59 columns, representing valid telemetry data points recorded during the first two turns (Turns 1–2) of the Albert Park Circuit. Each row corresponds to a single telemetry sample captured within these turns, while each column represents a signal, sensor reading, or engineered feature. The dataset has been geometrically validated using track boundaries, start and end cut lines, and strict on-track constraints to ensure that only realistic racing behaviour is retained.
 The final data product is designed for high-quality, reproducible modelling and visualisation. All laps were spatially aligned using the define_cut_line() and track_slice() functions to ensure a consistent reference frame across sessions. Following filtering, additional feature engineering was performed in a layered, progressive approach divided into Basic Features and Advanced Features, each building on the previous layer to quantify driver performance, vehicle behaviour, and cornering efficiency.
+
+### 4.1 Engineered and Derived Features 
 | **Group**                                            | **Column(s)**                                            | **Description**                                                                       |
 | ---------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | **Lap Counter**                                      | `lap_index`                                              | Derived from ordered laps; used for grouping and plotting.                            |
@@ -114,6 +113,7 @@ The final data product is designed for high-quality, reproducible modelling and 
 | **Angular Differences (°)**                          | `angle_fw_vs_vel`, `angle_car_vs_vel`, `angle_fw_vs_car` | Quantify slip, drift, and directional misalignment between car, wheels, and velocity. |
 | **Temperature Differentials (°C)**                   | `brake_front_rear_diff`, `brake_left_right_diff`         | Derived from brake temperatures to indicate mechanical or load imbalance.             |
 
+### 4.2 Original Telemetry Variables
 | **Group**                        | **Column(s)**                                                                                                                                                                                                                                                                                                                            | **Description**                                                                                                                                                                                             |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Identifiers & Metadata**       | `M_SESSIONUID`, `lap_index`, `M_CURRENTLAPNUM`                                                                                                                                                                                                                                                                                           | Unique session and lap identifiers used to distinguish individual laps and group telemetry data.                                                                                                            |
@@ -127,12 +127,12 @@ The final data product is designed for high-quality, reproducible modelling and 
 | **Additional Reference Columns** | `R_NAME`                                                                                                                                                                                                                                                                                                                                 | Reference or label for the race/session (e.g., track name or event ID). Used for contextual grouping or validation.                                                                                         |
 
 
-### Project Status
+## Project Status
 Our team has completed data cleaning and started feature engineering on the raw F1 dataset. Key steps include filtering and validation, where we remove all races on different tracks and those with missing or unrealistic distance data, and restrict the dataset to only turns 1 and 2. Sorting, where we ordered the dataset into telemetry points chronologically. Feature engineering where we created the target variable which we decided is the exit speed of turn 2, as well as derived velocity and g-forces from positional and timestamp data. Lastly, data quality handling where we dropped all redundant, irrelevant, duplicate or columns with zero variance (no predictive power). We applied interpolation and filling methods to address missing data that were consequential such as XYZ velocity, G-force and wheel angles. 
 
 In the next step, univariate and multivariate analysis will be conducted for finding patterns, anomalies, and outliers, and adding new features where required. Each member will be given a specific domain. Rayaan on temperature/pressure, Tay on position, Yulun on dynamics, Gahan on throttle/braking, and Kevin on rotation, velocity, and g-forces. Results will then be combined to build a consolidated, modelling-ready dataset.
 
-### Usage
+## Usage
 Our data product is designed for performance modelling focusing on exit speed at turn 2, a critical performance metric which determines momentum onto the straight before turn 3. Although Linear Regression is an easily interpretable modelling technique to show how different features contribute to exit speed, our given data is heavily left-skewed, hence misaligned with our goal. This leads to predictions that are unrepresentative of what produces top performance. We propose Quantile regression as the usage for our data product to directly model the upper percentiles of exit speed. This approach captures conditions that will yield top exit speeds while still learning from the dataset. By shifting focus on the high-performance tail, quantile regression better suits race engineering objectives. Quantile regression allows for analysis of factors such as early throttle, steering stability and optimal braking point that help contribute to better outcomes.
 
 In later stages of using our data product, more flexible methods should be explored including Random Forests (RF) or Ensemble Methods such as Adaptive boosting or Gradient Boosting. This is in order to capture nonlinearities and interactions while maintaining predictive power. RF will help identify complex dependencies concerning influence of throttle and lateral G-force on exit speed. Boosting methods should be used to improve accuracy concerning laps where exit speed deviates from expected values. 
