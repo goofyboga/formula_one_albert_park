@@ -10,66 +10,11 @@ Prior studies in motorsports analytics often lean on simplified simulations, ide
 
 We will ingest telemetry streams that include vehicle position, velocity, orientation, rotational data, and driver control signals (throttle, brake). These will be merged with session metadata (e.g. timestamping) and environmental readings (track temperature, ambient pressure). We’ll preprocess the data to clean, sync, and align frames, filter for the relevant track sections (corners), and engineer derived features (e.g. angular acceleration, lateral G forces, steering input gradients). From there, modeling (e.g. regression, decision trees) will seek to quantify and predict performance under varying scenarios.
 
+## 2. Feature Engineering and Analysis
 
-## 2. Sources
-2024 F1 Australian Grand Prix Telemetry in Melbourne Albert Park：
-The primary data source for this project is the 2024 Formula 1 Australian Grand Prix telemetry dataset, recorded at the Melbourne Albert Park Circuit. This telemetry data provides high-frequency measurements capturing the behavior of F1 cars as they navigate the circuit. The dataset includes several categories of information that together create a comprehensive picture of vehicle performance and driver interaction.
-
-### 2.1 Vehicle positioning and motion data:
-The first key source component is vehicle positioning and motion data, which records the car’s 3D spatial coordinates (`M_WORLDPOSITIONX_1`, `M_WORLDPOSITIONY_1`, `M_WORLDPOSITIONZ_1`), velocity components (`M_WORLDVELOCITYX_1`, `M_WORLDVELOCITYY_1`, `M_WORLDVELOCITYZ_1`), and orientation vectors `M_WORLDFORWARDDIRX_1`, `M_WORLDRIGHTDIRY_1`. These readings describe how the car moves and rotates along the circuit, allowing for reconstruction of trajectories and calculation of cornering forces.
-
-### 2.2 Driver control inputs:
-The second key source is driver control input data, which captures real-time human actions such as throttle percentage `M_THROTTLE_1`, braking intensity `M_BRAKE_1`, steering angle `M_STEER_1`, and gear selection `M_GEAR_1`. These variables are crucial for understanding how driver decisions influence the car’s dynamic response and how control inputs correlate with speed, stability, and efficiency through corners
-
-### 2.3 Session metadata and timing information:
-Finally, session metadata and timing information—including variables like `M_TIMESTAMP`, `M_CURRENTLAPTIMEINMS_1`, `M_SECTOR1TIMEINMS`, and `RACETIME` provide temporal and contextual structure to the telemetry. This ensures accurate alignment across laps, sectors, and sessions, while enabling detailed performance comparisons.
-
-Together, these three components create a comprehensive, multi-dimensional dataset of approximately 774,000 telemetry samples and 59 variables, validated through geometric alignment and filtering to retain only realistic, on-track racing data. This dataset serves as a robust foundation for modeling vehicle dynamics, evaluating driver behavior, and optimizing cornering performance at Albert Park.
-
-
-## 3. Workflow
-### 3.1 Loading data
-First, we loaded the raw UNSW F1 2024 telemetry dataset using the read_data() function, then the related reference files, `f1sim-ref-left.csv`,`f1sim-ref-right.csv`, and `f1sim-ref-line.csv`, using the `read_process_left()`, `read_process_right()`, and `read_process_line()` functions. The Albert Park circuit's official track limits are represented by the left and right boundary files, which we used to confirm the accuracy of on-track data. These datasets were limited to the same coordinate range as the primary telemetry data to maintain spatial consistency. This alignment offers a solid geometric basis for the validation, racing-line analysis, and spatial filtering processes that follow.
-
-### 3.2 Data cleaning
-Upon initial exploration and plotting, we observed that the dataset contained laps from multiple circuits, not just the one of interest. To focus exclusively on the Albert Park track in Melbourne, we used the `filter_melbourne()` function to retain only laps recorded on that circuit. Further inspection revealed missing values in the world position coordinates and some duplicated rows, likely due to inconsistencies in the data collection process. Since the world X and Y coordinates `M_WORLDPOSITIONX_1` and `M_WORLDPOSITIONY_1` form the foundation for all spatial analysis and visualisation, we removed any rows with missing values using the `remove_na()` function. This ensured that every telemetry point could be accurately positioned on the track, preventing issues with incomplete laps or plotting errors in later analysis. Additionally, several columns contained missing or duplicated information that did not contribute to modelling or analysis. These were removed using the `remove_redundant_cols()` function, leaving a clean and concise dataset suitable for further processing.
-
-### 3.3 Lap Structuring
-After cleaning the positional data, we structured the dataset to make it easier to analyse the laps. Using the `re_index()` function, we created a unique lap identifier, lap_index for each session–lap pair. This was done by grouping the data by session ID and current lap number, separating the dataset into distinct laps. This structure made it easier to visualise, compare, and summarise telemetry data on a per-lap basis, which is essential for subsequent analysis and modelling. 
-To further ensure data quality and consistency, we applied the `remove_stuttery_laps()` function to eliminate laps with an insufficient number of distinct telemetry rows. This function identifies and removes laps containing fewer than 500 unique xy-coordinate points. Such laps typically result from duplicated or incomplete telemetry recordings, where the car’s position data appears static or discontinuous. By enforcing this threshold, only laps with a sufficiently dense and continuous stream of positional data were retained, ensuring that subsequent spatial analyses and performance modelling were based on complete and reliable lap data.
-
-### 3.4 Track Boundaries
-The first step in this process involved using the `define_cut_line()` function, which automatically calculated the start and end coordinates of the sector’s boundary lines. Beginning from a reference point on the right side of the track, `define_cut_line()` determined the local direction of the boundary using neighbouring points and then constructed a perpendicular line extending across to the left boundary. The result was a line segment connecting the corresponding right and left boundary points, effectively defining the geometric “cut” across the circuit that marks the start and end of the selected track sector. By deriving these boundaries programmatically, we ensured consistency and reproducibility across all laps and sessions.
-
-Once the entry and exit lines were defined, the `track_slice()` function was applied to the telemetry dataset. This function spatially restricted the data to the region enclosed between the start and end lines, effectively isolating the section of the track that covers Turns 1 and 2 of the Albert Park circuit. Through this process, we filtered out all other portions of the lap, allowing subsequent analyses and visualisations to focus exclusively on a consistent and well-defined track segment directly aligned with the main objective of our project.
-
-### 3.5 Remove Invalid Tracks
-During initial inspection, we noticed that several laps contained telemetry points located well outside the left and right track boundaries. According to racing regulations, a lap is considered valid only if at least one wheel of the car remains within the track limits at all times. Based on this guideline, we estimated the approximate width of a Formula 1 car and used it as a tolerance margin to determine whether a point was still within the legal track area. We then implemented the `enforce_track_limits()` function to validate each telemetry point against the geometric boundaries of the Albert Park circuit. Any laps containing points that exceeded these adjusted limits were removed, ensuring that the final dataset represented only valid, on-track driving behaviour suitable for further analysis and modelling.
-
-
-### 3.6 Lap Summary and Feature Aggregation
-Instead of analysing thousands of individual data points, we decided to condense each lap into a single row containing representative statistics such as average line deviation, braking and throttle behaviour, and proximity to key corners. This approach simplifies performance comparison between laps, drivers, or sessions and provides a modelling-ready dataset for regression or clustering analysis.
-
-The `initialise_lap_summary()` function creates the foundational summary DataFrame, recording each lap’s index and total sector time. This is achieved by calculating the time difference between the first and last recorded timestamps `CURRENTLAPTIME` for each lap. This metric serves as a baseline measure of overall lap duration and enables subsequent analysis of how various features relate to performance time.
-
-The `avg_line_distance()` function adds a measure of spatial consistency by computing the average deviation from the racing line for each lap. It groups all telemetry points by lap_index and averages their perpendicular distances to the reference line, giving an indicator of how closely a driver followed the optimal path through the circuit. Smaller average distances suggest better adherence to the ideal line and, generally, higher performance consistency.
-
-The `min_apex_distance()` function calculates the minimum distance to each apex (Turns 1 and 2) for every lap. By using a KD-Tree nearest-neighbour search, it determines how close a driver’s trajectory came to the ideal apex points. This helps quantify cornering precision — laps that approach the apex more closely are typically associated with smoother and faster cornering performance.
-
-The `add_avg_brake_pressure()` and `add_avg_throttle_pressure()` functions compute the mean brake and throttle pressures across each lap. These values summarize a driver’s overall input style — for example, whether a lap involved aggressive braking or smooth, consistent throttle application. Such aggregates are useful for distinguishing different driving strategies and their influence on lap time.
-
-The `add_peak_brake_pressure()` and `add_peak_throttle_pressure()` functions record the maximum brake and throttle inputs within each lap. These features capture extremes of driver control and can reveal how much braking force or acceleration was applied in key segments. Comparing these peak values across laps helps assess consistency in control inputs and vehicle dynamics under varying cornering conditions.
-
-The `first_braking_point()` function identifies the first instance of braking within each lap where the brake input exceeds a set threshold (default = 0.2). It records the spatial coordinates (brake_x, brake_y) and pressure at that point. This allows analysts to determine how early or late drivers initiate braking before entering Turn 1, which is crucial for studying braking strategy and corner entry efficiency.
-
-Similarly, the `first_turning_point()` function detects the first steering action beyond a set threshold (default = 0.2 in either direction). It logs the corresponding coordinates and steering angle, representing the moment a driver begins turning into the corner. Comparing the timing and position of these first turning points across laps reveals differences in driver anticipation and line approach into the corner sequence.
-
-Finally, the `summary_eng()` function orchestrates all the above computations to produce the completed lap summary dataset. It integrates each lap’s timing, geometric, and control-input features into a single, comprehensive table. This summary provides an interpretable, lap-level view of performance — simplifying analysis, enabling efficient visualisation, and supporting downstream modelling tasks such as predicting lap times or evaluating driver behaviour.
-
-
-### 3.7 Telemetry Feature Engineering
 We decided to engineer some features that will provide point-level telemetry into interpretable, modelling-ready features that describe how the car is driven through Turns 1–2. Instead of only relying on lap aggregates, we compute per-sample signals that capture driver behaviour, vehicle dynamics, and line efficiency. These features power visual analyses and serve as inputs for downstream models that relate control inputs and trajectory to outcomes like corner-exit speed or sector time.
 
+### 2.1 Vehicle Orientation and Steering Angle
 <p align="center">
   <img src="orientation_direction_analysis.png" alt="Vehicle Orientation and Steering Angle Analysis" width="1000"/>
 </p>
@@ -83,6 +28,7 @@ This feature measures how well the car’s actual motion aligns with the directi
 3) `angle_fw_vs_car` – Front Wheel Direction vs. Car Facing Direction
 This feature isolates the driver’s steering input magnitude, showing how far the front wheels are turned relative to the car’s forward direction. High values indicate aggressive or corrective oversteering, while smaller values reflect smoother, more stable cornering. Around Turn 1, this metric typically rises sharply at turn-in, oscillates slightly through the apex (representing micro-adjustments), and falls back to zero on corner exit as the car straightens. By comparing angle_fw_vs_car to the two previous features, we can distinguish between driver-induced behavior (intent) and vehicle dynamics (response), offering a clear picture of how steering input quality affects rotation, balance and time.
 
+### 2.2 Braking and Throttle Balancing
 <p align="center">
   <img src="braking_behav_at_apex.png" alt="T1 Braking Behavior Comparison during Turning" width="800"/>
 </p>
@@ -95,8 +41,8 @@ This feature isolates the driver’s steering input magnitude, showing how far t
 
 Together, these behaviors of early, modulated braking, precise timing of zero input, and subtle pre-apex taps demonstrate advanced control of weight transfer, tire friction, and car balance, explaining why top drivers can carry more speed through the corner by utilising pragmatic braking while maintaining stability.
 
-### 3.8 Assisted passing conditions
-Gear + RPM trace the power delivery profile.DRS delineates aero state changes that affect top-speed zones.Steering Angle captures driver precision and car balance in direction changes.Together they form the rhythm of braking–turn-in–power-on, the fundamental cycle of lap-time optimization through the two corners.
+### 2.3 Gear and DRS Fluctuations
+Gear + RPM trace the power delivery profile.DRS delineates aero state changes that affect top-speed zones. Steering Angle captures driver precision and car balance in direction changes. Together they form the rhythm of braking–turn-in–power-on, the fundamental cycle of lap-time optimization through the two corners.
 <p align="center">
   <img src="GEAR_DRS_RPM_STEER.png"
     
@@ -109,7 +55,7 @@ Green line = 1 indicates DRS on (straight); 0 indicates off (cornering). It is o
 4) Steering Angle
 Small fluctuations represent fine-tuning in a straight line; larger positive/negative deflections correspond to T1 cornering and countersteering during T2; a return to 0 indicates a positive exit from the corner.
 
-### 3.9 Data Creation
+## 3. Data Creation
 In order to create and access the data product. You must run create_data.py in the root of this repository. This script expects the following file structure. 
 
     data3001-data-f1-7/
@@ -154,11 +100,64 @@ The final data product is designed for high-quality, reproducible modelling and 
 | **Performance & Sector Metrics** | `M_LAPDISTANCE_1`, `M_TOTALDISTANCE_1`, `M_LAPTIMEINMS`, `M_TRACKLENGTH`, `lap_index`                                                                                                                                                                                                                                                    | Distance and lap metrics used to compute per-lap performance, lap segmentation, and consistency checks.                                                                                                     |
 | **Additional Reference Columns** | `R_NAME`                                                                                                                                                                                                                                                                                                                                 | Reference or label for the race/session (e.g., track name or event ID). Used for contextual grouping or validation.                                                                                         |
 
-## 5. Usage
+## 5. Workflow
+### 5.1 Loading data
+First, we loaded the raw UNSW F1 2024 telemetry dataset using the read_data() function, then the related reference files, `f1sim-ref-left.csv`,`f1sim-ref-right.csv`, and `f1sim-ref-line.csv`, using the `read_process_left()`, `read_process_right()`, and `read_process_line()` functions. The Albert Park circuit's official track limits are represented by the left and right boundary files, which we used to confirm the accuracy of on-track data. These datasets were limited to the same coordinate range as the primary telemetry data to maintain spatial consistency. This alignment offers a solid geometric basis for the validation, racing-line analysis, and spatial filtering processes that follow.
+
+### 5.2 Data cleaning
+Upon initial exploration and plotting, we observed that the dataset contained laps from multiple circuits, not just the one of interest. To focus exclusively on the Albert Park track in Melbourne, we used the `filter_melbourne()` function to retain only laps recorded on that circuit. Further inspection revealed missing values in the world position coordinates and some duplicated rows, likely due to inconsistencies in the data collection process. Since the world X and Y coordinates `M_WORLDPOSITIONX_1` and `M_WORLDPOSITIONY_1` form the foundation for all spatial analysis and visualisation, we removed any rows with missing values using the `remove_na()` function. This ensured that every telemetry point could be accurately positioned on the track, preventing issues with incomplete laps or plotting errors in later analysis. Additionally, several columns contained missing or duplicated information that did not contribute to modelling or analysis. These were removed using the `remove_redundant_cols()` function, leaving a clean and concise dataset suitable for further processing.
+
+### 5.3 Lap Structuring
+After cleaning the positional data, we structured the dataset to make it easier to analyse the laps. Using the `re_index()` function, we created a unique lap identifier, lap_index for each session–lap pair. This was done by grouping the data by session ID and current lap number, separating the dataset into distinct laps. This structure made it easier to visualise, compare, and summarise telemetry data on a per-lap basis, which is essential for subsequent analysis and modelling. 
+To further ensure data quality and consistency, we applied the `remove_stuttery_laps()` function to eliminate laps with an insufficient number of distinct telemetry rows. This function identifies and removes laps containing fewer than 500 unique xy-coordinate points. Such laps typically result from duplicated or incomplete telemetry recordings, where the car’s position data appears static or discontinuous. By enforcing this threshold, only laps with a sufficiently dense and continuous stream of positional data were retained, ensuring that subsequent spatial analyses and performance modelling were based on complete and reliable lap data.
+
+### 5.4 Track Boundaries
+The first step in this process involved using the `define_cut_line()` function, which automatically calculated the start and end coordinates of the sector’s boundary lines. Beginning from a reference point on the right side of the track, `define_cut_line()` determined the local direction of the boundary using neighbouring points and then constructed a perpendicular line extending across to the left boundary. The result was a line segment connecting the corresponding right and left boundary points, effectively defining the geometric “cut” across the circuit that marks the start and end of the selected track sector. By deriving these boundaries programmatically, we ensured consistency and reproducibility across all laps and sessions.
+
+Once the entry and exit lines were defined, the `track_slice()` function was applied to the telemetry dataset. This function spatially restricted the data to the region enclosed between the start and end lines, effectively isolating the section of the track that covers Turns 1 and 2 of the Albert Park circuit. Through this process, we filtered out all other portions of the lap, allowing subsequent analyses and visualisations to focus exclusively on a consistent and well-defined track segment directly aligned with the main objective of our project.
+
+### 5.5 Remove Invalid Tracks
+During initial inspection, we noticed that several laps contained telemetry points located well outside the left and right track boundaries. According to racing regulations, a lap is considered valid only if at least one wheel of the car remains within the track limits at all times. Based on this guideline, we estimated the approximate width of a Formula 1 car and used it as a tolerance margin to determine whether a point was still within the legal track area. We then implemented the `enforce_track_limits()` function to validate each telemetry point against the geometric boundaries of the Albert Park circuit. Any laps containing points that exceeded these adjusted limits were removed, ensuring that the final dataset represented only valid, on-track driving behaviour suitable for further analysis and modelling.
+
+
+### 5.6 Lap Summary and Feature Aggregation
+Instead of analysing thousands of individual data points, we decided to condense each lap into a single row containing representative statistics such as average line deviation, braking and throttle behaviour, and proximity to key corners. This approach simplifies performance comparison between laps, drivers, or sessions and provides a modelling-ready dataset for regression or clustering analysis.
+
+The `initialise_lap_summary()` function creates the foundational summary DataFrame, recording each lap’s index and total sector time. This is achieved by calculating the time difference between the first and last recorded timestamps `CURRENTLAPTIME` for each lap. This metric serves as a baseline measure of overall lap duration and enables subsequent analysis of how various features relate to performance time.
+
+The `avg_line_distance()` function adds a measure of spatial consistency by computing the average deviation from the racing line for each lap. It groups all telemetry points by lap_index and averages their perpendicular distances to the reference line, giving an indicator of how closely a driver followed the optimal path through the circuit. Smaller average distances suggest better adherence to the ideal line and, generally, higher performance consistency.
+
+The `min_apex_distance()` function calculates the minimum distance to each apex (Turns 1 and 2) for every lap. By using a KD-Tree nearest-neighbour search, it determines how close a driver’s trajectory came to the ideal apex points. This helps quantify cornering precision — laps that approach the apex more closely are typically associated with smoother and faster cornering performance.
+
+The `add_avg_brake_pressure()` and `add_avg_throttle_pressure()` functions compute the mean brake and throttle pressures across each lap. These values summarize a driver’s overall input style — for example, whether a lap involved aggressive braking or smooth, consistent throttle application. Such aggregates are useful for distinguishing different driving strategies and their influence on lap time.
+
+The `add_peak_brake_pressure()` and `add_peak_throttle_pressure()` functions record the maximum brake and throttle inputs within each lap. These features capture extremes of driver control and can reveal how much braking force or acceleration was applied in key segments. Comparing these peak values across laps helps assess consistency in control inputs and vehicle dynamics under varying cornering conditions.
+
+The `first_braking_point()` function identifies the first instance of braking within each lap where the brake input exceeds a set threshold (default = 0.2). It records the spatial coordinates (brake_x, brake_y) and pressure at that point. This allows analysts to determine how early or late drivers initiate braking before entering Turn 1, which is crucial for studying braking strategy and corner entry efficiency.
+
+Similarly, the `first_turning_point()` function detects the first steering action beyond a set threshold (default = 0.2 in either direction). It logs the corresponding coordinates and steering angle, representing the moment a driver begins turning into the corner. Comparing the timing and position of these first turning points across laps reveals differences in driver anticipation and line approach into the corner sequence.
+
+Finally, the `summary_eng()` function orchestrates all the above computations to produce the completed lap summary dataset. It integrates each lap’s timing, geometric, and control-input features into a single, comprehensive table. This summary provides an interpretable, lap-level view of performance — simplifying analysis, enabling efficient visualisation, and supporting downstream modelling tasks such as predicting lap times or evaluating driver behaviour.
+
+## 6. Usage
 Our data product is designed for performance modelling focusing on exit speed at turn 2, a critical performance metric which determines momentum onto the straight before turn 3. Although Linear Regression is an easily interpretable modelling technique to show how different features contribute to exit speed, our given data is heavily left-skewed, hence misaligned with our goal. This leads to predictions that are unrepresentative of what produces top performance. We propose Quantile regression as the usage for our data product to directly model the upper percentiles of exit speed. This approach captures conditions that will yield top exit speeds while still learning from the dataset. By shifting focus on the high-performance tail, quantile regression better suits race engineering objectives. Quantile regression allows for analysis of factors such as early throttle, steering stability and optimal braking point that help contribute to better outcomes.
 
 In later stages of using our data product, more flexible methods should be explored including Random Forests (RF) or Ensemble Methods such as Adaptive boosting or Gradient Boosting. This is in order to capture nonlinearities and interactions while maintaining predictive power. RF will help identify complex dependencies concerning influence of throttle and lateral G-force on exit speed. Boosting methods should be used to improve accuracy concerning laps where exit speed deviates from expected values. 
 
+## 7. Sources
+2024 F1 Australian Grand Prix Telemetry in Melbourne Albert Park：
+The primary data source for this project is the 2024 Formula 1 Australian Grand Prix telemetry dataset, recorded at the Melbourne Albert Park Circuit. This telemetry data provides high-frequency measurements capturing the behavior of F1 cars as they navigate the circuit. The dataset includes several categories of information that together create a comprehensive picture of vehicle performance and driver interaction.
+
+### 7.1 Vehicle positioning and motion data:
+The first key source component is vehicle positioning and motion data, which records the car’s 3D spatial coordinates (`M_WORLDPOSITIONX_1`, `M_WORLDPOSITIONY_1`, `M_WORLDPOSITIONZ_1`), velocity components (`M_WORLDVELOCITYX_1`, `M_WORLDVELOCITYY_1`, `M_WORLDVELOCITYZ_1`), and orientation vectors `M_WORLDFORWARDDIRX_1`, `M_WORLDRIGHTDIRY_1`. These readings describe how the car moves and rotates along the circuit, allowing for reconstruction of trajectories and calculation of cornering forces.
+
+### 7.2 Driver control inputs:
+The second key source is driver control input data, which captures real-time human actions such as throttle percentage `M_THROTTLE_1`, braking intensity `M_BRAKE_1`, steering angle `M_STEER_1`, and gear selection `M_GEAR_1`. These variables are crucial for understanding how driver decisions influence the car’s dynamic response and how control inputs correlate with speed, stability, and efficiency through corners
+
+### 7.3 Session metadata and timing information:
+Finally, session metadata and timing information—including variables like `M_TIMESTAMP`, `M_CURRENTLAPTIMEINMS_1`, `M_SECTOR1TIMEINMS`, and `RACETIME` provide temporal and contextual structure to the telemetry. This ensures accurate alignment across laps, sectors, and sessions, while enabling detailed performance comparisons.
+
+Together, these three components create a comprehensive, multi-dimensional dataset of approximately 774,000 telemetry samples and 59 variables, validated through geometric alignment and filtering to retain only realistic, on-track racing data. This dataset serves as a robust foundation for modeling vehicle dynamics, evaluating driver behavior, and optimizing cornering performance at Albert Park.
 
 #### Support Information
 Main Contact: Kevin Zhou (Email: kevin7goestoheaven@gmail.com, z5342593@ad.unsw.edu.au)
