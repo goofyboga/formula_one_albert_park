@@ -92,6 +92,7 @@ This feature isolates the driver’s steering input magnitude, showing how far t
 2) Multi-tap brake modulation: Top drivers display a multi-tap or oscillating brake pattern leading into the apex (see purple Top Braking line where this occurred 3 times from -50m to -20m), reflecting precise modulation to balance weight transfer, maintain optimal tire slip, and prepare the car for rotation into the corner. Average drivers tend to apply a more constant, monotonic brake input.
 
 3) Apex brake adjustment / Yaw control: Top drivers briefly reapply a small amount of brake at the apex itself to control yaw, fine-tuning the car’s rotation at the moment of minimum longitudinal load and maximizing exit potential (see hump at T1 apex). Average drivers’ sustained brake input delays rotation and reduces exit speed.
+
 Together, these behaviors of early, modulated braking, precise timing of zero input, and subtle pre-apex taps demonstrate advanced control of weight transfer, tire friction, and car balance, explaining why top drivers can carry more speed through the corner by utilising pragmatic braking while maintaining stability.
 
 ### 3.8 Assisted passing conditions
