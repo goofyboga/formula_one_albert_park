@@ -29,8 +29,15 @@ This feature measures how well the car’s actual motion aligns with the directi
 This feature isolates the driver’s steering input magnitude, showing how far the front wheels are turned relative to the car’s forward direction. High values indicate aggressive or corrective oversteering, while smaller values reflect smoother, more stable cornering. Around Turn 1, this metric typically rises sharply at turn-in, oscillates slightly through the apex (representing micro-adjustments), and falls back to zero on corner exit as the car straightens. By comparing angle_fw_vs_car to the two previous features, we can distinguish between driver-induced behavior (intent) and vehicle dynamics (response), offering a clear picture of how steering input quality affects rotation, balance and time.
 
 ### 2.2 Braking and Throttle Balancing
+
 <p align="center">
-  <img src="braking_behav_at_apex.png" alt="T1 Braking Behavior Comparison during Turning" width="800"/>
+  <img src="brake_throtle_behav_apex_hugging.png" alt="Brake and Throttle Behavior around Apexes" width="1000"/>
+</p>
+
+A combined variable, M_BRAKE_THROTTLE_1 = M_THROTTLE_1 - M_BRAKE_1, allows visualizing and quantifying driver control strategy. Additional features track the first brake point, brake distance to apex, brake duration, and throttle resumption metrics. Visualizing top exit speeds along this trajectory, overlaid with the brake-throttle control variable, allows us to assess how effectively drivers balance braking and throttle inputs and whether the fastest trajectories follow the ideal racing line. This enables analysis of how drivers balance deceleration and acceleration relative to the apex position. Optimal cornering through the S-shaped Turns 1–2 is achieved by hugging track boundaries and minimizing transition time between apexes. By maximizing the local turning radius R=1/k where k is curvature, drivers reduce lateral acceleration peaks and maintain momentum. We'll take a more detailed look at the exact timing and positional differences in braking that top drivers F1 drivers make in the following section. 
+
+<p align="center">
+  <img src="braking_behav_at_apex.png" alt="T1 Braking Behavior Comparison during Turning" width="1000"/>
 </p>
 
 1) Early and lower average braking: Top drivers begin braking earlier and with lower peak pressure, allowing smoother deceleration and better front-end grip. In contrast, average drivers maintain higher brake pressure later, taking up to 40m post-apex before reaching zero input, whereas top drivers reach zero brake input around -18 m at the pre-apex.
