@@ -71,7 +71,7 @@ Finally, the `summary_eng()` function orchestrates all the above computations to
 We decided to engineer some features that will provide point-level telemetry into interpretable, modelling-ready features that describe how the car is driven through Turns 1–2. Instead of only relying on lap aggregates, we compute per-sample signals that capture driver behaviour, vehicle dynamics, and line efficiency. These features power visual analyses and serve as inputs for downstream models that relate control inputs and trajectory to outcomes like corner-exit speed or sector time.
 
 <p align="center">
-  <img src="image.png" alt="T1 Braking Behavior Comparison during Turning" width="800"/>
+  <img src="orientation_direction_analysis.png" alt="Vehicle Orientation and Steering Angle Analysis" width="1000"/>
 </p>
 
 1) `angle_car_vs_vel` – Car’s Facing Direction vs. Velocity Vector
@@ -84,7 +84,7 @@ This feature measures how well the car’s actual motion aligns with the directi
 This feature isolates the driver’s steering input magnitude, showing how far the front wheels are turned relative to the car’s forward direction. High values indicate aggressive or corrective oversteering, while smaller values reflect smoother, more stable cornering. Around Turn 1, this metric typically rises sharply at turn-in, oscillates slightly through the apex (representing micro-adjustments), and falls back to zero on corner exit as the car straightens. By comparing angle_fw_vs_car to the two previous features, we can distinguish between driver-induced behavior (intent) and vehicle dynamics (response), offering a clear picture of how steering input quality affects rotation, balance and time.
 
 <p align="center">
-  <img src="undefined.png" alt="Vehicle Orientation and Steering Angle Analysis" width="1000"/>
+  <img src="braking_behav_at_apex.png" alt="T1 Braking Behavior Comparison during Turning" width="800"/>
 </p>
 
 1) Early and lower average braking: Top drivers begin braking earlier and with lower peak pressure, allowing smoother deceleration and better front-end grip. In contrast, average drivers maintain higher brake pressure later, taking up to 40m post-apex before reaching zero input, whereas top drivers reach zero brake input around -18 m at the pre-apex.
